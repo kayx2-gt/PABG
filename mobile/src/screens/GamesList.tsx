@@ -42,7 +42,6 @@ const GamesList = ({ route, navigation }: any) => {
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
-      {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity
           onPress={() => navigation.goBack()}
@@ -51,10 +50,9 @@ const GamesList = ({ route, navigation }: any) => {
           <Ionicons name="arrow-back" size={24} color={Theme.colors.textPrimary} />
         </TouchableOpacity>
         <Text style={styles.title}>{title}</Text>
-        <View style={{ width: 40 }} /> {/* Spacer to center title */}
+        <View style={{ width: 40 }} />
       </View>
 
-      {/* Search Input */}
       <View style={styles.searchBar}>
         <Ionicons name="search-outline" size={20} color={Theme.colors.textSecondary} style={styles.searchIcon} />
         <TextInput
@@ -71,7 +69,6 @@ const GamesList = ({ route, navigation }: any) => {
         )}
       </View>
 
-      {/* Grid List */}
       {filteredGames.length === 0 ? (
         <View style={styles.emptyState}>
           <Ionicons name="search-outline" size={60} color={Theme.colors.textMuted} />
@@ -164,7 +161,7 @@ const styles = StyleSheet.create({
   thumbnail: {
     width: '100%',
     height: '100%',
-    object-fit: 'cover',
+    resizeMode: 'cover',
   },
   gradientOverlay: {
     position: 'absolute',
