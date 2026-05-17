@@ -23,13 +23,23 @@ const ProtectedLayout = ({ children }: { children: React.ReactNode }) => {
   if (!user) return <Navigate to="/login" />;
 
   const navItems = [
-    { to: '/', label: '⬛ Dashboard' },
+    { to: '/', label: '📊 Dashboard' },
     { to: '/games', label: '🎮 Games' },
     { to: '/users', label: '👥 Users' },
   ];
 
   return (
     <div className="admin-container">
+      {/* Mobile Header */}
+      <header className="mobile-header">
+        <span className="mobile-brand">PABG ADMIN</span>
+        <div className="mobile-user">
+          <span className="mobile-username">@{user.displayName || user.email?.split('@')[0]}</span>
+          <button onClick={logout} className="mobile-logout-btn">Logout</button>
+        </div>
+      </header>
+
+      {/* Desktop Sidebar */}
       <nav className="sidebar">
         <div className="sidebar-header">
           <h2>PABG</h2>
@@ -52,9 +62,25 @@ const ProtectedLayout = ({ children }: { children: React.ReactNode }) => {
           ))}
         </ul>
       </nav>
+
+      {/* Main Content */}
       <main className="content">
         {children}
       </main>
+
+      {/* Mobile Bottom Navigation */}
+      <nav className="mobile-nav">
+        {navItems.map(item => (
+          <Link
+            key={item.to}
+            to={item.to}
+            className={`mobile-nav-item ${location.pathname === item.to ? 'active' : ''}`}
+          >
+            <span className="mobile-nav-icon">{item.label.split(' ')[0]}</span>
+            <span className="mobile-nav-label">{item.label.split(' ')[1]}</span>
+          </Link>
+        ))}
+      </nav>
     </div>
   );
 };
