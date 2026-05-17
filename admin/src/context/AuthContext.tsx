@@ -1,5 +1,5 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
-import { onAuthStateChanged, User, signInWithPopup, signOut } from 'firebase/auth';
+import { onAuthStateChanged, User, signInWithPopup, signInWithRedirect, signOut } from 'firebase/auth';
 import { auth, googleProvider } from '../api/firebase';
 
 // Add your specific admin Google emails here. 
@@ -43,12 +43,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const loginWithGoogle = async () => {
     try {
-      const result = await signInWithPopup(auth, googleProvider);
+      const isMobile = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
+      if (isMobile) {
+        await signInWithRedirect(auth, googleProvider);
+      } else {
+        const result = await signInWithPopup(auth, googleProvider);
 
-      // Enforce allowlist immediately upon login
-      if (ALLOWED_ADMIN_EMAILS.length > 0 && result.user.email && !ALLOWED_ADMIN_EMAILS.includes(result.user.email)) {
-        await signOut(auth);
-        throw new Error(`Unauthorized Account: ${result.user.email} is not an admin.`);
+        // Enforce allowlist immediately upon login
+        if (ALLOWED_ADMIN_EMAILS.length > 0 && result.user.email && !ALLOWED_ADMIN_EMAILS.includes(result.user.email)) {
+          await signOut(auth);
+          throw new Error(`Unauthorized Account: ${result.user.email} is not an admin.`);
+        }
       }
     } catch (error) {
       console.error("Google Login Error:", error);
