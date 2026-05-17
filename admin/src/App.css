@@ -1083,6 +1083,8 @@ tr:hover td {
   flex-direction: column;
   gap: 16px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  height: 100%;
+  box-sizing: border-box;
 }
 
 .db-topgames-list {
@@ -1305,6 +1307,64 @@ tr:hover td {
   display: flex;
   flex-direction: column;
   gap: 24px;
+}
+
+.db-actions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+.db-action-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  transition: all 0.2s ease;
+}
+
+.db-action-row:hover {
+  background: rgba(200, 255, 0, 0.04);
+  border-color: rgba(200, 255, 0, 0.15);
+}
+
+.db-action-icon {
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.db-action-details {
+  flex: 1;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.db-action-text {
+  font-size: 13px;
+  color: #fff;
+}
+
+.db-action-text strong {
+  color: #C8FF00;
+}
+
+.db-action-time {
+  font-size: 11px;
+  color: #94A3B8;
+  white-space: nowrap;
 }
 
 /* ========== MOBILE RESPONSIVE MEDIA QUERIES ========== */

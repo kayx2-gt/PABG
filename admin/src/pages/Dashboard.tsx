@@ -252,18 +252,12 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* Two-column layout: left = Most Played + Categories, right = Top Players + Recent Actions */}
+      {/* Perfectly aligned grid layout */}
       <div className="db-row-two-cols">
-        {/* Left column */}
-        <div className="db-left-col">
-          <TopGamesList games={topGames} />
-          <CategoryCharts games={games} />
-        </div>
-        {/* Right column */}
-        <div className="db-right-col">
-          <TopPlayers players={players} />
-          <RecentActions />
-        </div>
+        <TopGamesList games={topGames} />
+        <TopPlayers players={players} />
+        <CategoryCharts games={games} />
+        <RecentActions />
       </div>
     </div>
   );
