@@ -11,6 +11,7 @@ import './App.css';
 const ProtectedLayout = ({ children }: { children: React.ReactNode }) => {
   const { user, loading, logout } = useAuth();
   const location = useLocation();
+  const [isSidebarOpen, setIsSidebarOpen] = React.useState(false);
 
   if (loading) {
     return (
@@ -32,6 +33,7 @@ const ProtectedLayout = ({ children }: { children: React.ReactNode }) => {
     <div className="admin-container">
       {/* Mobile Header */}
       <header className="mobile-header">
+        <button onClick={() => setIsSidebarOpen(true)} className="mobile-menu-btn">☰</button>
         <span className="mobile-brand">PABG ADMIN</span>
         <div className="mobile-user">
           <span className="mobile-username">@{user.displayName || user.email?.split('@')[0]}</span>
@@ -39,8 +41,16 @@ const ProtectedLayout = ({ children }: { children: React.ReactNode }) => {
         </div>
       </header>
 
-      {/* Desktop Sidebar */}
-      <nav className="sidebar">
+      {/* Sidebar Overlay Backdrop */}
+      {isSidebarOpen && (
+        <div className="sidebar-overlay" onClick={() => setIsSidebarOpen(false)} />
+      )}
+
+      {/* Desktop & Mobile Sliding Sidebar */}
+      <nav className={`sidebar ${isSidebarOpen ? 'open' : ''}`}>
+        <div className="sidebar-close-row">
+          <button onClick={() => setIsSidebarOpen(false)} className="sidebar-close-btn">×</button>
+        </div>
         <div className="sidebar-header">
           <h2>PABG</h2>
           <p className="app-subtitle">Admin Panel</p>
@@ -55,6 +65,7 @@ const ProtectedLayout = ({ children }: { children: React.ReactNode }) => {
               <Link
                 to={item.to}
                 className={location.pathname === item.to ? 'active' : ''}
+                onClick={() => setIsSidebarOpen(false)}
               >
                 {item.label}
               </Link>

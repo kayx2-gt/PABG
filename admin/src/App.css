@@ -1051,6 +1051,28 @@ tr:hover td {
   color: var(--primary);
 }
 
+/* Mobile Header Menu Button */
+.mobile-menu-btn {
+  background: transparent;
+  border: none;
+  color: var(--primary);
+  font-size: 24px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  transition: transform 0.2s;
+}
+
+.mobile-menu-btn:hover {
+  transform: scale(1.1);
+}
+
+.sidebar-close-row {
+  display: none;
+}
+
 /* ========== MOBILE RESPONSIVE MEDIA QUERIES ========== */
 @media (max-width: 768px) {
   .admin-container {
@@ -1060,7 +1082,48 @@ tr:hover td {
   }
 
   .sidebar {
-    display: none !important;
+    display: flex !important;
+    position: fixed;
+    top: 0;
+    left: -280px; /* Hidden offscreen by default */
+    width: 260px;
+    height: 100vh;
+    z-index: 1000;
+    transition: left 0.3s ease-in-out;
+    box-shadow: 20px 0 50px rgba(0, 0, 0, 0.8);
+  }
+
+  .sidebar.open {
+    left: 0; /* Slide in! */
+  }
+
+  /* Close button row in sidebar */
+  .sidebar-close-row {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 10px;
+  }
+
+  .sidebar-close-btn {
+    background: transparent;
+    border: none;
+    color: var(--error);
+    font-size: 28px;
+    cursor: pointer;
+    padding: 0 8px;
+    font-weight: 800;
+  }
+
+  /* Overlay Backdrop when sidebar is active */
+  .sidebar-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(3px);
+    z-index: 999;
   }
 
   .content {
