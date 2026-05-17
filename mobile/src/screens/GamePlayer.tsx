@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { View, StyleSheet, ActivityIndicator, BackHandler, StatusBar, Platform } from 'react-native';
 import { WebView } from 'react-native-webview';
 import * as ScreenOrientation from 'expo-screen-orientation';
-import * as NavigationBar from 'expo-navigation-bar';
+// import * as NavigationBar from 'expo-navigation-bar';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Theme } from '../utils/theme';
 import { recordGamePlay } from '../api/api';
@@ -15,12 +15,16 @@ const GamePlayer = ({ route, navigation }: any) => {
     // Force the screen to landscape immediately for gameplay
     ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.LANDSCAPE).catch(() => { });
 
-    // Hide status bar & system navigation bar for fullscreen immersive gameplay
+    // Hide status bar for immersive gameplay (Safe: does not require rebuilding)
     StatusBar.setHidden(true, 'fade');
+    
+    // NOTE: Android navigation bar requires a native rebuild. Disabling for testing.
+    /*
     if (Platform.OS === 'android') {
       NavigationBar.setVisibilityAsync('hidden').catch(() => { });
       NavigationBar.setBehaviorAsync('immersive').catch(() => { });
     }
+    */
 
     // Anti-spam timer: Only record game play after 15 seconds
     const playTimer = setTimeout(async () => {
@@ -44,11 +48,13 @@ const GamePlayer = ({ route, navigation }: any) => {
       clearTimeout(playTimer); // Cancel if they leave before 15 seconds
       backHandler.remove();
 
-      // Restore status bar & system navigation bar when leaving the game
+      // Restore status bar
       StatusBar.setHidden(false, 'fade');
+      /*
       if (Platform.OS === 'android') {
         NavigationBar.setVisibilityAsync('visible').catch(() => { });
       }
+      */
 
       // Force back to portrait when leaving the game
       ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP).catch(() => { });
@@ -58,9 +64,11 @@ const GamePlayer = ({ route, navigation }: any) => {
   const handleExit = async () => {
     try {
       StatusBar.setHidden(false, 'fade');
+      /*
       if (Platform.OS === 'android') {
         await NavigationBar.setVisibilityAsync('visible');
       }
+      */
     } catch (e) { }
     try {
       await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP);
