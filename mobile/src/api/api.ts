@@ -3,11 +3,12 @@ import { Game } from '../types/game';
 
 // Set EXPO_PUBLIC_SERVER_URL in .env to your Vercel URL after deployment
 // e.g. EXPO_PUBLIC_SERVER_URL=https://your-app.vercel.app/api
-const BASE_URL = (process.env.EXPO_PUBLIC_SERVER_URL || 'http://192.168.254.167:3000').replace(/\/$/, '');
+const RAW_URL = (process.env.EXPO_PUBLIC_SERVER_URL || 'http://192.168.254.167:3000').replace(/\/$/, '');
 
 // Detects if we're pointing to Vercel (uses /api/ paths + ?sub= routing)
 // or the local Express server (uses classic Express paths)
-const isVercel = BASE_URL.includes('vercel.app') || BASE_URL.includes('/api');
+const isVercel = RAW_URL.includes('vercel.app') || RAW_URL.includes('/api');
+const BASE_URL = isVercel && !RAW_URL.includes('/api') ? `${RAW_URL}/api` : RAW_URL;
 
 async function getAuthHeaders(): Promise<Record<string, string>> {
   const user = auth.currentUser;
@@ -23,7 +24,7 @@ async function getAuthHeaders(): Promise<Record<string, string>> {
 
 export const fetchGames = async () => {
   const headers = await getAuthHeaders();
-  const url = isVercel ? `${BASE_URL}/games` : `${BASE_URL}/games`;
+  const url = `${BASE_URL}/games`;
   const response = await fetch(url, { headers });
   return response.json();
 };
@@ -183,5 +184,97 @@ export const checkFavorite = async (gameId: string, email: string) => {
     ? `${BASE_URL}/favorites?sub=check&gameId=${gameId}&email=${encodeURIComponent(email)}`
     : `${BASE_URL}/favorites/check/${gameId}?email=${encodeURIComponent(email)}`;
   const response = await fetch(url, { headers });
+  return response.json();
+};
+
+// ── Admin Helper Functions ───────────────────────────────────────────────────
+
+export const fetchManagedGames = async () => {
+  const headers = await getAuthHeaders();
+  const url = `${BASE_URL}/games`;
+  const response = await fetch(url, { headers });
+  return response.json();
+};
+
+export const fetchExternalGames = async (category = '0', num = 20, page = 1) => {
+  const headers = await getAuthHeaders();
+  const url = `${BASE_URL}/admin?sub=gamemonetize&category=${category}&num=${num}&page=${page}`;
+  const response = await fetch(url, { headers });
+  return response.json();
+};
+
+export const saveGame = async (gameData: any) => {
+  const headers = await getAuthHeaders();
+  const url = `${BASE_URL}/admin?sub=games`;
+  const response = await fetch(url, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify(gameData),
+  });
+  return response.json();
+};
+
+export const updateGame = async (gameId: string, updatedData: any) => {
+  const headers = await getAuthHeaders();
+  const url = `${BASE_URL}/admin?sub=games&id=${gameId}`;
+  const response = await fetch(url, {
+    method: 'PUT',
+    headers,
+    body: JSON.stringify(updatedData),
+  });
+  return response.json();
+};
+
+export const deleteGame = async (gameId: string) => {
+  const headers = await getAuthHeaders();
+  const url = `${BASE_URL}/admin?sub=games&id=${gameId}`;
+  const response = await fetch(url, {
+    method: 'DELETE',
+    headers,
+  });
+  return response.json();
+};
+
+export const fetchUsers = async () => {
+  const headers = await getAuthHeaders();
+  const url = `${BASE_URL}/users`;
+  const response = await fetch(url, { headers });
+  return response.json();
+};
+
+export const updateUser = async (userId: string, userData: any) => {
+  const headers = await getAuthHeaders();
+  const url = `${BASE_URL}/admin?sub=users&id=${encodeURIComponent(userId)}`;
+  const response = await fetch(url, {
+    method: 'PUT',
+    headers,
+    body: JSON.stringify(userData),
+  });
+  return response.json();
+};
+
+export const updateUserSuspension = async (
+  userId: string,
+  isSuspended: boolean,
+  suspensionReason = '',
+  durationDays?: number | null
+) => {
+  const headers = await getAuthHeaders();
+  const url = `${BASE_URL}/admin?sub=suspension&id=${encodeURIComponent(userId)}`;
+  const response = await fetch(url, {
+    method: 'PATCH',
+    headers,
+    body: JSON.stringify({ isSuspended, suspensionReason, durationDays }),
+  });
+  return response.json();
+};
+
+export const deleteUser = async (userId: string) => {
+  const headers = await getAuthHeaders();
+  const url = `${BASE_URL}/admin?sub=users&id=${encodeURIComponent(userId)}`;
+  const response = await fetch(url, {
+    method: 'DELETE',
+    headers,
+  });
   return response.json();
 };
