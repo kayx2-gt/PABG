@@ -1,5 +1,5 @@
-import React, { useEffect, useState, useRef, memo, useCallback } from 'react';
-import { View, Text, FlatList, StyleSheet, TouchableOpacity, Image, ScrollView, Alert, Animated, ActivityIndicator } from 'react-native';
+import React, { useEffect, useState, useRef, memo } from 'react';
+import { View, Text, FlatList, StyleSheet, TouchableOpacity, Image, ScrollView, Alert } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -10,85 +10,6 @@ import { Game } from '../types/game';
 import { Theme } from '../utils/theme';
 import { HomeSkeleton } from '../components/SkeletonLoader';
 
-// ══════════════════════════════════════════════════════
-// HOME HERO CAROUSEL COMPONENT (NO LAYOUT SHIFTS)
-// ══════════════════════════════════════════════════════
-const HomeHeroCarousel = ({ games, navigation }: { games: Game[]; navigation: any }) => {
-  const [active, setActive] = useState(0);
-  const timer = useRef<ReturnType<typeof setInterval> | null>(null);
-
-  const next = useCallback(() => {
-    setActive(prev => (prev + 1) % Math.max(games.length, 1));
-  }, [games.length]);
-
-  useEffect(() => {
-    if (!games.length) return;
-    timer.current = setInterval(next, 7000); // 7 seconds per slide
-    return () => {
-      if (timer.current) clearInterval(timer.current);
-    };
-  }, [games.length, next]);
-
-  if (!games.length) {
-    return (
-      <View style={styles.heroEmpty}>
-        <ActivityIndicator size="small" color={Theme.colors.lime} />
-      </View>
-    );
-  }
-
-  const game = games[active];
-
-  return (
-    <TouchableOpacity 
-      activeOpacity={0.95}
-      style={styles.heroWrapper}
-      onPress={() => navigation.navigate('GameDetails', { game })}
-    >
-      <Image 
-        source={{ uri: game.thumbnail }} 
-        style={styles.heroBgImage} 
-        blurRadius={4}
-      />
-      <View style={styles.heroOverlay} />
-
-      <View style={styles.heroContent}>
-        <View style={styles.heroInfo}>
-          <Text style={styles.heroRank}>🔥 FEATURED GAME</Text>
-          <Text style={styles.heroTitle} numberOfLines={1}>{game.title}</Text>
-          
-          <View style={styles.heroMetaRow}>
-            <View style={styles.heroCategoryPill}>
-              <Text style={styles.heroCategoryText}>{game.category}</Text>
-            </View>
-            <Text style={styles.heroPlaysText}>▶ {game.playCount || 0} plays</Text>
-          </View>
-
-          <View style={styles.playTag}>
-            <Ionicons name="play-circle" size={15} color={Theme.colors.lime} style={{ marginRight: 4 }} />
-            <Text style={styles.playTagText}>Tap to Play Now</Text>
-          </View>
-        </View>
-
-        <Image 
-          source={{ uri: game.thumbnail }} 
-          style={styles.heroThumb}
-        />
-      </View>
-
-      {/* Dots Indicator */}
-      <View style={styles.dotsContainer}>
-        {games.slice(0, 5).map((_, i) => (
-          <View
-            key={i}
-            style={[styles.dot, i === active && styles.activeDot]}
-          />
-        ))}
-      </View>
-    </TouchableOpacity>
-  );
-};
-
 const Home = ({ navigation }: any) => {
   const { user } = useAuth();
   const insets = useSafeAreaInsets();
@@ -98,22 +19,6 @@ const Home = ({ navigation }: any) => {
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [loading, setLoading] = useState(true);
   const featuredListRef = useRef<FlatList>(null);
-  const [showCarousel, setShowCarousel] = useState(false);
-  const swapAnim = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      Animated.timing(swapAnim, {
-        toValue: 1,
-        duration: 800,
-        useNativeDriver: true,
-      }).start(() => {
-        setShowCarousel(true);
-      });
-    }, 6000); // 6 seconds welcome time
-
-    return () => clearTimeout(timer);
-  }, []);
 
   useEffect(() => {
     loadData();
@@ -226,74 +131,44 @@ const Home = ({ navigation }: any) => {
     );
   }
 
-  const renderHeader = () => {
-    const greetingOpacity = swapAnim.interpolate({
-      inputRange: [0, 1],
-      outputRange: [1, 0],
-    });
-    const carouselOpacity = swapAnim.interpolate({
-      inputRange: [0, 1],
-      outputRange: [0, 1],
-    });
-
-    return (
-      <View>
-        {/* Header */}
-        <View style={styles.header}>
-          <Text style={styles.logo}>PABG</Text>
-          <View style={[styles.headerIcons, { alignItems: 'center' }]}>
-            <TouchableOpacity
-              onPress={() => navigation.navigate('Favorites')}
-              style={{ marginRight: 15 }}
-            >
-              <Ionicons name="heart-outline" size={28} color={Theme.colors.textPrimary} />
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              onPress={() => navigation.navigate('Profile')}
-            >
-              {user?.photoURL ? (
-                <Image
-                  source={{ uri: user.photoURL }}
-                  style={{ width: 28, height: 28, borderRadius: 14, borderWidth: 1.5, borderColor: Theme.colors.lime }}
-                />
-              ) : (
-                <Ionicons name="person-circle-outline" size={26} color={Theme.colors.textPrimary} />
-              )}
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        {/* User Pill */}
-        <TouchableOpacity style={styles.userPill} onPress={handleProfilePress}>
-          <Text style={styles.userName}>
-            @{user?.displayName || user?.email?.split('@')[0] || 'gamer'}
-          </Text>
-        </TouchableOpacity>
-
-        {/* Animated Greeting / Carousel Swap Box */}
-        <View style={styles.swapContainer}>
-          {/* Greeting Overlay (No card borders or background, matches old style exactly!) */}
-          <Animated.View 
-            pointerEvents={showCarousel ? 'none' : 'auto'}
-            style={[styles.greetingAbsolute, { opacity: greetingOpacity }]}
+  const renderHeader = () => (
+    <View>
+      {/* Header */}
+      <View style={styles.header}>
+        <Text style={styles.logo}>Moba Launcher</Text>
+        <View style={[styles.headerIcons, { alignItems: 'center' }]}>
+          <TouchableOpacity
+            onPress={() => navigation.navigate('Favorites')}
+            style={{ marginRight: 15 }}
           >
-            <Text style={styles.greetingText}>
-              Hi, {user?.displayName ? user.displayName.split(' ')[0] : (user?.email?.split('@')[0] || 'Gamer')}!{"\n"}Ready to play?
-            </Text>
-            <Text style={styles.greetingSubtext}>
-              Explore your personalized library & trending play feeds!
-            </Text>
-          </Animated.View>
+            <Ionicons name="heart-outline" size={28} color={Theme.colors.textPrimary} />
+          </TouchableOpacity>
 
-          {/* Hero Carousel Overlay */}
-          <Animated.View 
-            pointerEvents={showCarousel ? 'auto' : 'none'}
-            style={[styles.heroCardAbsolute, { opacity: carouselOpacity }]}
+          <TouchableOpacity
+            onPress={() => navigation.navigate('Profile')}
           >
-            <HomeHeroCarousel games={featuredGames} navigation={navigation} />
-          </Animated.View>
+            {user?.photoURL ? (
+              <Image
+                source={{ uri: user.photoURL }}
+                style={{ width: 28, height: 28, borderRadius: 14, borderWidth: 1.5, borderColor: Theme.colors.lime }}
+              />
+            ) : (
+              <Ionicons name="person-circle-outline" size={26} color={Theme.colors.textPrimary} />
+            )}
+          </TouchableOpacity>
         </View>
+      </View>
+
+      {/* User Pill */}
+      <TouchableOpacity style={styles.userPill} onPress={handleProfilePress}>
+        <Text style={styles.userName}>
+          @{user?.displayName || user?.email?.split('@')[0] || 'gamer'}
+        </Text>
+      </TouchableOpacity>
+
+      <Text style={styles.greeting}>
+        Hi, {user?.displayName ? user.displayName.split(' ')[0] : (user?.email?.split('@')[0] || 'Gamer')}!{"\n"}Ready to play?
+      </Text>
 
       {/* Categories Section */}
       <View style={styles.sectionHeader}>
@@ -319,7 +194,9 @@ const Home = ({ navigation }: any) => {
       {/* Top Games Section */}
       <View style={styles.sectionHeader}>
         <Text style={styles.sectionTitle}>Top games</Text>
-        <TouchableOpacity><Text style={styles.viewAll}>View All</Text></TouchableOpacity>
+        <TouchableOpacity onPress={() => navigation.navigate('GamesList', { title: 'Top Games', games: featuredGames })}>
+          <Text style={styles.viewAll}>View All</Text>
+        </TouchableOpacity>
       </View>
       <FlatList
         ref={featuredListRef}
@@ -336,11 +213,12 @@ const Home = ({ navigation }: any) => {
       {/* New Games Section Title */}
       <View style={styles.sectionHeader}>
         <Text style={styles.sectionTitle}>New games</Text>
-        <TouchableOpacity><Text style={styles.viewAll}>View All</Text></TouchableOpacity>
+        <TouchableOpacity onPress={() => navigation.navigate('GamesList', { title: 'New Games', games: newGames })}>
+          <Text style={styles.viewAll}>View All</Text>
+        </TouchableOpacity>
       </View>
     </View>
   );
-};
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
@@ -366,160 +244,6 @@ const styles = StyleSheet.create({
   headerIcons: { flexDirection: 'row' },
   userPill: { backgroundColor: Theme.colors.lime, alignSelf: 'flex-start', paddingHorizontal: 12, paddingVertical: 4, borderRadius: 20, marginTop: 15, marginLeft: 20, flexDirection: 'row', alignItems: 'center' },
   userName: { fontWeight: '800', fontSize: 11, color: Theme.colors.background },
-  
-  // Timed Swap Box Styles (Absolutely No Layout Shifts!)
-  swapContainer: {
-    height: 170,
-    marginHorizontal: 20,
-    marginTop: 15,
-    marginBottom: 20,
-    position: 'relative',
-  },
-  greetingAbsolute: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    justifyContent: 'center',
-  },
-  greetingText: {
-    fontSize: 32,
-    fontWeight: '900',
-    color: '#FFF',
-    lineHeight: 38,
-    marginBottom: 6,
-  },
-  greetingSubtext: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: Theme.colors.textSecondary,
-    lineHeight: 18,
-  },
-  heroCardAbsolute: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    borderRadius: 24,
-    borderWidth: 1,
-    borderColor: '#2A2A45',
-    overflow: 'hidden',
-    backgroundColor: '#0D0D1A',
-  },
-  
-  // Home Hero Carousel Card Styles
-  heroWrapper: {
-    flex: 1,
-    position: 'relative',
-  },
-  heroBgImage: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    opacity: 0.3,
-  },
-  heroOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(13, 13, 26, 0.45)',
-  },
-  heroContent: {
-    flex: 1,
-    flexDirection: 'row',
-    padding: 16,
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  heroInfo: {
-    flex: 1,
-    justifyContent: 'center',
-    marginRight: 10,
-  },
-  heroRank: {
-    color: Theme.colors.lime,
-    fontSize: 9,
-    fontWeight: '800',
-    letterSpacing: 1.5,
-    marginBottom: 4,
-  },
-  heroTitle: {
-    color: '#FFF',
-    fontSize: 18,
-    fontWeight: '900',
-    marginBottom: 6,
-  },
-  heroMetaRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 10,
-  },
-  heroCategoryPill: {
-    backgroundColor: 'rgba(124, 58, 237, 0.25)',
-    borderWidth: 1,
-    borderColor: 'rgba(124, 58, 237, 0.5)',
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 12,
-  },
-  heroCategoryText: {
-    color: '#C4B5FD',
-    fontSize: 9,
-    fontWeight: '700',
-  },
-  heroPlaysText: {
-    color: Theme.colors.textSecondary,
-    fontSize: 10,
-    fontWeight: '600',
-  },
-  playTag: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  playTagText: {
-    color: Theme.colors.lime,
-    fontSize: 11,
-    fontWeight: '800',
-  },
-  heroThumb: {
-    width: 75,
-    height: 110,
-    borderRadius: 12,
-    borderWidth: 1.5,
-    borderColor: 'rgba(255,255,255,0.1)',
-  },
-  dotsContainer: {
-    position: 'absolute',
-    bottom: 10,
-    left: 16,
-    flexDirection: 'row',
-    gap: 4,
-    alignItems: 'center',
-  },
-  dot: {
-    width: 5,
-    height: 5,
-    borderRadius: 2.5,
-    backgroundColor: 'rgba(255,255,255,0.3)',
-  },
-  activeDot: {
-    width: 14,
-    backgroundColor: Theme.colors.lime,
-  },
-  heroEmpty: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: Theme.colors.surface,
-  },
-
   greeting: { fontSize: Theme.typography.greeting.size, fontWeight: Theme.typography.greeting.weight, color: Theme.colors.textPrimary, marginTop: 10, marginBottom: 20, lineHeight: 28 * 1.15, paddingHorizontal: 20 },
   sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 15, paddingHorizontal: 20 },
   sectionTitle: { fontSize: Theme.typography.sectionTitle.size, fontWeight: Theme.typography.sectionTitle.weight, color: Theme.colors.textPrimary },
