@@ -31,7 +31,7 @@ const Search = ({ navigation }: any) => {
     if (text.trim().length === 0) {
       setFilteredGames([]);
     } else {
-      const filtered = allGames.filter(game =>
+      const filtered = allGames.filter(game => 
         game.title.toLowerCase().includes(text.toLowerCase()) ||
         game.category.toLowerCase().includes(text.toLowerCase()) ||
         (game.tags && game.tags.toLowerCase().includes(text.toLowerCase()))
@@ -59,14 +59,14 @@ const Search = ({ navigation }: any) => {
       <View style={styles.searchHeader}>
         {/* Header Top Row */}
         <View style={styles.headerTopRow}>
-          <Text style={styles.logo}>PABG</Text>
-          <TouchableOpacity
+          <Text style={styles.logo}>Moba Launcher</Text>
+          <TouchableOpacity 
             onPress={() => navigation.navigate('Profile')}
           >
             {user?.photoURL ? (
-              <Image
-                source={{ uri: user.photoURL }}
-                style={{ width: 28, height: 28, borderRadius: 14, borderWidth: 1.5, borderColor: Theme.colors.lime }}
+              <Image 
+                source={{ uri: user.photoURL }} 
+                style={{ width: 28, height: 28, borderRadius: 14, borderWidth: 1.5, borderColor: Theme.colors.lime }} 
               />
             ) : (
               <Ionicons name="person-circle-outline" size={26} color={Theme.colors.textPrimary} />
@@ -93,9 +93,20 @@ const Search = ({ navigation }: any) => {
       </View>
 
       {searchQuery.length === 0 ? (
-        <View style={styles.emptyState}>
-          <Ionicons name="search-outline" size={80} color={Theme.colors.textMuted} />
-          <Text style={styles.emptyText}>Find your next favorite game</Text>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.sectionTitle}>🔥 Recommended Games</Text>
+          <FlatList
+            data={allGames.slice(0, 5)}
+            keyExtractor={(item) => `rec-${item.id}`}
+            renderItem={renderGameItem}
+            contentContainerStyle={[styles.list, { paddingBottom: 120 }]}
+            ListEmptyComponent={
+              <View style={styles.emptyState}>
+                <Ionicons name="search-outline" size={60} color={Theme.colors.textMuted} />
+                <Text style={styles.emptyText}>Find your next favorite game</Text>
+              </View>
+            }
+          />
         </View>
       ) : filteredGames.length === 0 ? (
         <View style={styles.emptyState}>
@@ -115,6 +126,14 @@ const Search = ({ navigation }: any) => {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Theme.colors.background },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '900',
+    color: '#FFFFFF',
+    marginHorizontal: 20,
+    marginTop: 10,
+    marginBottom: 5,
+  },
   searchHeader: { padding: 20 },
   headerTopRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
   headerIcons: { flexDirection: 'row', alignItems: 'center' },
