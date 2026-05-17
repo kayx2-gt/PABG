@@ -182,9 +182,13 @@ const TopPlayers = ({ players }: { players: any[] }) => (
           <View key={p.id || i} style={styles.playerRow}>
             <Text style={styles.playerMedal}>{medals[i] || '👤'}</Text>
             <View style={styles.playerAvatar}>
-              <Text style={styles.playerAvatarText}>
-                {(p.name || 'U').charAt(0).toUpperCase()}
-              </Text>
+              {p.photoURL ? (
+                <Image source={{ uri: p.photoURL }} style={{ width: 32, height: 32, borderRadius: 10 }} />
+              ) : (
+                <Text style={styles.playerAvatarText}>
+                  {(p.name || 'U').charAt(0).toUpperCase()}
+                </Text>
+              )}
             </View>
             <View style={styles.playerInfo}>
               <Text style={styles.playerName} numberOfLines={1}>{p.name || 'Unknown'}</Text>

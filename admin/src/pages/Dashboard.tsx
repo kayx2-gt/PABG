@@ -66,7 +66,11 @@ const TopPlayers = ({ players }: { players: any[] }) => (
         players.slice(0, 3).map((p, i) => (
           <div key={p.id || i} className="db-player-row-compact">
             <span className="db-player-medal-compact" style={{ color: medalColors[i] }}>{medals[i]}</span>
-            <div className="db-player-avatar-compact">{(p.name || 'U').charAt(0).toUpperCase()}</div>
+            {p.photoURL ? (
+              <img src={p.photoURL} alt={p.name} className="db-player-avatar-img-compact" />
+            ) : (
+              <div className="db-player-avatar-compact">{(p.name || 'U').charAt(0).toUpperCase()}</div>
+            )}
             <div className="db-player-info">
               <span className="db-player-name-compact">{p.name || 'Unknown'}</span>
               <span className="db-player-games-compact">{p.gamesPlayed || 0} games</span>

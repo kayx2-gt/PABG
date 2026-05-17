@@ -1073,6 +1073,240 @@ tr:hover td {
   display: none;
 }
 
+/* Dashboard Compact Components */
+.db-card-compact {
+  background: #1A1A2E;
+  border-radius: 20px;
+  border: 1px solid #2A2A45;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+}
+
+.db-topgames-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.db-topgames-row-compact {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  transition: all 0.2s ease;
+}
+
+.db-topgames-row-compact:hover {
+  background: rgba(200, 255, 0, 0.04);
+  border-color: rgba(200, 255, 0, 0.15);
+}
+
+.db-topgames-rank-compact {
+  font-size: 14px;
+  font-weight: 800;
+  color: #C8FF00;
+  width: 24px;
+}
+
+.db-topgames-thumb-compact {
+  width: 48px;
+  height: 48px;
+  border-radius: 8px;
+  object-fit: cover;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.db-topgames-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow: hidden;
+}
+
+.db-topgames-title-compact {
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.db-topgames-cat-compact {
+  font-size: 11px;
+  color: #94A3B8;
+}
+
+.db-topgames-plays-compact {
+  font-size: 14px;
+  font-weight: 800;
+  color: #C8FF00;
+  background: rgba(200, 255, 0, 0.1);
+  padding: 4px 8px;
+  border-radius: 8px;
+  border: 1px solid rgba(200, 255, 0, 0.15);
+}
+
+.db-player-row-compact {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  transition: all 0.2s ease;
+}
+
+.db-player-row-compact:hover {
+  background: rgba(200, 255, 0, 0.04);
+  border-color: rgba(200, 255, 0, 0.15);
+}
+
+.db-player-medal-compact {
+  font-size: 18px;
+  width: 24px;
+  text-align: center;
+}
+
+.db-player-avatar-compact {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #7C3AED, #4C1D95);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 900;
+  color: #fff;
+  flex-shrink: 0;
+}
+
+.db-player-avatar-img-compact {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  object-fit: cover;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  flex-shrink: 0;
+}
+
+.db-player-name-compact {
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.db-player-games-compact {
+  font-size: 11px;
+  color: #94A3B8;
+}
+
+.db-player-score-compact {
+  font-size: 14px;
+  font-weight: 800;
+  color: #C8FF00;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.db-player-score-label {
+  font-size: 10px;
+  color: #94A3B8;
+  font-weight: 600;
+}
+
+.db-two-charts {
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+}
+
+.db-chart-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.01);
+  border-radius: 12px;
+  padding: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.02);
+}
+
+.db-chart-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: #94A3B8;
+}
+
+.stats-mini-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.stat-mini-card {
+  background: #1A1A2E;
+  border-radius: 16px;
+  border: 1px solid #2A2A45;
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+.stat-mini-icon {
+  font-size: 20px;
+  background: rgba(200, 255, 0, 0.1);
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.stat-mini-value {
+  font-size: 20px;
+  font-weight: 900;
+  color: #fff;
+}
+
+.stat-mini-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #94A3B8;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.db-row-two-cols {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+
+.db-left-col, .db-right-col {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
 /* ========== MOBILE RESPONSIVE MEDIA QUERIES ========== */
 @media (max-width: 768px) {
   .admin-container {
