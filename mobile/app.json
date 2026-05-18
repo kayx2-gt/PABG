@@ -18,7 +18,8 @@
         "foregroundImage": "./src/assets/icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.appdevfinal.mobalauncher"
+      "package": "com.appdevfinal.mobalauncher",
+      "googleServicesFile": "./google-services.json"
     },
     "scheme": "com.appdevfinal.mobalauncher",
     "plugins": [

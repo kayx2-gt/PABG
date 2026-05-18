@@ -555,7 +555,6 @@ const styles = StyleSheet.create({
     borderRadius: 100,
     top: '28%',
     transform: [{ scaleX: 1.5 }],
-    filter: 'blur(20px)',
   },
   groundShadow: {
     position: 'absolute',
