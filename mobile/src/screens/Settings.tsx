@@ -282,17 +282,19 @@ const Settings = ({ navigation }: any) => {
                 try {
                   if (isAdmin) {
                     await AsyncStorage.setItem('activeRole', 'user');
+                    setIsAdmin(false);
                     Alert.alert(
-                      'Logged In', 
-                      'Successfully logged in as User! Refreshing the launcher...',
-                      [{ text: 'OK', onPress: () => DevSettings.reload() }]
+                      'Role Switched', 
+                      'Successfully logged in as User! Switched to player interface.',
+                      [{ text: 'OK', onPress: () => navigation.navigate('Main') }]
                     );
                   } else {
                     await AsyncStorage.setItem('activeRole', 'admin');
+                    setIsAdmin(true);
                     Alert.alert(
-                      'Logged In', 
-                      'Successfully logged in as Admin! Refreshing the dashboard...',
-                      [{ text: 'OK', onPress: () => DevSettings.reload() }]
+                      'Role Switched', 
+                      'Successfully logged in as Admin! Switched to management dashboard.',
+                      [{ text: 'OK', onPress: () => navigation.navigate('AdminMain') }]
                     );
                   }
                 } catch (error) {
