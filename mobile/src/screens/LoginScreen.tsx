@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Alert, ImageBackground } from 'react-native';
 import { GoogleAuthProvider, signInWithCredential, signInAnonymously, updateProfile } from 'firebase/auth';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
 import { GoogleSignin, statusCodes } from '@react-native-google-signin/google-signin';
+import { LinearGradient } from 'expo-linear-gradient';
 import { auth } from '../api/firebase';
 import { Theme } from '../utils/theme';
 import { upsertUser } from '../api/api';
+
+const backdropImg = require('../assets/login-backdrop.png');
 
 const LoginScreen = ({ navigation }: any) => {
   const [loading, setLoading] = useState(false);
@@ -87,62 +90,112 @@ const LoginScreen = ({ navigation }: any) => {
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.logo}>PABG</Text>
-      <Text style={styles.title}>Welcome Back!</Text>
+    <ImageBackground source={backdropImg} style={styles.background} resizeMode="cover">
+      <LinearGradient
+        colors={['transparent', 'transparent', 'rgba(13, 13, 26, 0.95)']}
+        locations={[0, 0.62, 1]}
+        style={styles.gradient}
+      />
 
-      <TouchableOpacity
-        style={styles.googleButton}
-        onPress={handleGoogleLogin}
-        disabled={loading}
-      >
-        <Ionicons name="logo-google" size={20} color={Theme.colors.background} style={{ marginRight: 10 }} />
-        <Text style={styles.googleButtonText}>Sign in with Google</Text>
-      </TouchableOpacity>
+      <View style={styles.contentContainer}>
+        {/* Buttons */}
+        <TouchableOpacity
+          style={styles.googleButton}
+          onPress={handleGoogleLogin}
+          disabled={loading}
+        >
+          <Ionicons name="logo-google" size={20} color={Theme.colors.background} style={{ marginRight: 10 }} />
+          <Text style={styles.googleButtonText}>Sign in with Google</Text>
+        </TouchableOpacity>
 
-      <View style={styles.divider}>
-        <View style={styles.line} />
-        <Text style={styles.dividerText}>OR</Text>
-        <View style={styles.line} />
+        <View style={styles.divider}>
+          <View style={styles.line} />
+          <Text style={styles.dividerText}>OR</Text>
+          <View style={styles.line} />
+        </View>
+
+        <TouchableOpacity style={styles.guestButton} onPress={handleGuestLogin} disabled={loading}>
+          {loading ? (
+            <ActivityIndicator color={Theme.colors.textPrimary} />
+          ) : (
+            <Text style={styles.guestButtonText}>Play as Guest</Text>
+          )}
+        </TouchableOpacity>
       </View>
-
-      <TouchableOpacity style={styles.guestButton} onPress={handleGuestLogin} disabled={loading}>
-        {loading ? (
-          <ActivityIndicator color={Theme.colors.textPrimary} />
-        ) : (
-          <Text style={styles.guestButtonText}>Play as Guest</Text>
-        )}
-      </TouchableOpacity>
-    </View>
+    </ImageBackground>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: 'center', padding: 20, backgroundColor: Theme.colors.background },
-  logo: { fontSize: 32, fontWeight: '900', textAlign: 'center', marginBottom: 20, color: Theme.colors.lime },
-  title: { fontSize: 24, marginBottom: 40, textAlign: 'center', color: Theme.colors.textPrimary, fontWeight: '800' },
-  divider: { flexDirection: 'row', alignItems: 'center', marginVertical: 20 },
-  line: { flex: 1, height: 1, backgroundColor: Theme.colors.border },
-  dividerText: { marginHorizontal: 10, color: Theme.colors.textMuted, fontSize: 12 },
+  background: {
+    flex: 1,
+    width: '100%',
+    height: '100%',
+    backgroundColor: '#0D0D1A',
+  },
+  gradient: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+  },
+  contentContainer: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    padding: 24,
+    paddingBottom: 85, // Positions items beautifully above Android system navigation bar / action buttons
+  },
+  divider: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 18,
+  },
+  line: {
+    flex: 1,
+    height: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+  },
+  dividerText: {
+    marginHorizontal: 12,
+    color: Theme.colors.textMuted,
+    fontSize: 11,
+    fontWeight: '800',
+    letterSpacing: 1,
+  },
   googleButton: {
     flexDirection: 'row',
     backgroundColor: Theme.colors.lime,
-    padding: 15,
-    borderRadius: 8,
+    padding: 16,
+    borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 10
+    shadowColor: Theme.colors.lime,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 5,
   },
-  googleButtonText: { fontWeight: 'bold', color: Theme.colors.background, fontSize: 16 },
+  googleButtonText: {
+    fontWeight: '900',
+    color: Theme.colors.background,
+    fontSize: 16,
+    letterSpacing: 0.5,
+  },
   guestButton: {
-    backgroundColor: '#ffffff10',
-    padding: 15,
-    borderRadius: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    padding: 16,
+    borderRadius: 14,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: Theme.colors.border
+    borderColor: 'rgba(255, 255, 255, 0.15)',
   },
-  guestButtonText: { fontWeight: 'bold', color: Theme.colors.textPrimary, fontSize: 16 }
+  guestButtonText: {
+    fontWeight: '800',
+    color: Theme.colors.textPrimary,
+    fontSize: 16,
+    letterSpacing: 0.5,
+  }
 });
 
 export default LoginScreen;

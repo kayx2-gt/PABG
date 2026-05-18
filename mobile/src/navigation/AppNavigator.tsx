@@ -17,7 +17,7 @@ import Favorites from '../screens/Favorites';
 import Search from '../screens/Search';
 import LoginScreen from '../screens/LoginScreen';
 import GamesList from '../screens/GamesList';
-
+import Settings from '../screens/Settings';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -97,6 +97,7 @@ const AppNavigator = () => {
             <Stack.Screen name="Profile" component={Profile} />
             <Stack.Screen name="Favorites" component={Favorites} />
             <Stack.Screen name="GamesList" component={GamesList} />
+            <Stack.Screen name="Settings" component={Settings} />
           </>
         ) : (
           <Stack.Screen name="Auth" component={AuthStack} />
