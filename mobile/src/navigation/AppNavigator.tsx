@@ -19,6 +19,10 @@ import LoginScreen from '../screens/LoginScreen';
 import GamesList from '../screens/GamesList';
 import Settings from '../screens/Settings';
 
+import AdminDashboard from '../screens/admin/AdminDashboard';
+import AdminUsers from '../screens/admin/AdminUsers';
+import AdminGames from '../screens/admin/AdminGames';
+
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
 
@@ -81,8 +85,57 @@ const AppTabs = () => {
   );
 };
 
+const AdminTabs = () => {
+  const insets = useSafeAreaInsets();
+  return (
+    <Tab.Navigator
+      screenOptions={({ route }) => ({
+        tabBarIcon: ({ focused }) => {
+          let iconName: any;
+          if (route.name === 'AdminHome') iconName = focused ? 'shield' : 'shield-outline';
+          else if (route.name === 'AdminUsers') iconName = focused ? 'people' : 'people-outline';
+          else if (route.name === 'AdminGames') iconName = focused ? 'game-controller' : 'game-controller-outline';
+
+          return (
+            <View style={[
+              styles.iconContainer, 
+              focused && styles.activeIconBg
+            ]}>
+              <Ionicons name={iconName} size={focused ? 24 : 22} color={focused ? '#000' : '#FFF'} />
+            </View>
+          );
+        },
+        tabBarActiveTintColor: Theme.colors.lime,
+        tabBarInactiveTintColor: '#FFF',
+        tabBarShowLabel: false,
+        headerShown: false,
+        tabBarStyle: {
+          position: 'absolute',
+          bottom: Math.max(20, insets.bottom + 10),
+          left: 40,
+          right: 40,
+          backgroundColor: '#000000',
+          borderRadius: 35,
+          height: 65,
+          borderTopWidth: 0,
+          elevation: 10,
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 10 },
+          shadowOpacity: 0.3,
+          shadowRadius: 20,
+          paddingBottom: 0,
+        },
+      })}
+    >
+      <Tab.Screen name="AdminHome" component={AdminDashboard} />
+      <Tab.Screen name="AdminUsers" component={AdminUsers} />
+      <Tab.Screen name="AdminGames" component={AdminGames} />
+    </Tab.Navigator>
+  );
+};
+
 const AppNavigator = () => {
-  const { user, loading } = useAuth();
+  const { user, loading, isAdmin } = useAuth();
 
   if (loading) return null;
 
@@ -91,7 +144,17 @@ const AppNavigator = () => {
       <Stack.Navigator screenOptions={{ headerShown: false }}>
         {user ? (
           <>
-            <Stack.Screen name="Main" component={AppTabs} />
+            {isAdmin ? (
+              <>
+                <Stack.Screen name="AdminMain" component={AdminTabs} />
+                <Stack.Screen name="Main" component={AppTabs} />
+              </>
+            ) : (
+              <>
+                <Stack.Screen name="Main" component={AppTabs} />
+                <Stack.Screen name="AdminMain" component={AdminTabs} />
+              </>
+            )}
             <Stack.Screen name="GameDetails" component={GameDetails} />
             <Stack.Screen name="GamePlayer" component={GamePlayer} />
             <Stack.Screen name="Profile" component={Profile} />
