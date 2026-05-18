@@ -57,6 +57,11 @@ const Settings = ({ navigation }: any) => {
           } catch (error) {
             console.error("Google sign out error", error);
           }
+          try {
+            await AsyncStorage.removeItem('activeRole');
+          } catch (error) {
+            console.error("AsyncStorage clear activeRole error", error);
+          }
           await auth.signOut();
         }
       }

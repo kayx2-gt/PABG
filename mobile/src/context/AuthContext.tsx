@@ -44,15 +44,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         try {
           // Attempt to fetch profile to trigger suspension verification
           await fetchUserProfile();
-          setUser(firebaseUser);
           
           const isAllowed = firebaseUser.email ? ALLOWED_ADMIN_EMAILS.includes(firebaseUser.email) : false;
+          let roleIsAdmin = false;
           if (isAllowed) {
             const savedRole = await AsyncStorage.getItem('activeRole');
-            setIsAdmin(savedRole === 'user' ? false : true);
-          } else {
-            setIsAdmin(false);
+            roleIsAdmin = savedRole === 'user' ? false : true;
           }
+          
+          setIsAdmin(roleIsAdmin);
+          setUser(firebaseUser);
         } catch (error: any) {
           console.error('Suspension verification check error:', error);
           if (error.status === 403 || error.message.includes('suspended')) {
@@ -63,15 +64,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             );
           } else {
             console.warn('Profile fetch error, allowing session:', error.message);
-            setUser(firebaseUser); // Allow login if it's a transient network issue
             
             const isAllowed = firebaseUser.email ? ALLOWED_ADMIN_EMAILS.includes(firebaseUser.email) : false;
+            let roleIsAdmin = false;
             if (isAllowed) {
               const savedRole = await AsyncStorage.getItem('activeRole');
-              setIsAdmin(savedRole === 'user' ? false : true);
-            } else {
-              setIsAdmin(false);
+              roleIsAdmin = savedRole === 'user' ? false : true;
             }
+            setIsAdmin(roleIsAdmin);
+            setUser(firebaseUser); // Allow login if it's a transient network issue
           }
           if (error.status === 403 || error.message.includes('suspended')) {
             await auth.signOut();
