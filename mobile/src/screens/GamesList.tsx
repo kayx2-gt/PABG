@@ -171,7 +171,6 @@ const styles = StyleSheet.create({
   },
   cardInfo: {
     padding: 10,
-    background: 'linear-gradient(180deg, rgba(13,13,26,0) 0%, rgba(13,13,26,0.95) 100%)',
     backgroundColor: 'rgba(13, 13, 26, 0.85)',
   },
   gameTitle: {
