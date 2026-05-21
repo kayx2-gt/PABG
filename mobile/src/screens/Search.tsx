@@ -31,7 +31,7 @@ const Search = ({ navigation }: any) => {
     if (text.trim().length === 0) {
       setFilteredGames([]);
     } else {
-      const filtered = allGames.filter(game => 
+      const filtered = allGames.filter(game =>
         game.title.toLowerCase().includes(text.toLowerCase()) ||
         game.category.toLowerCase().includes(text.toLowerCase()) ||
         (game.tags && game.tags.toLowerCase().includes(text.toLowerCase()))
@@ -59,14 +59,14 @@ const Search = ({ navigation }: any) => {
       <View style={styles.searchHeader}>
         {/* Header Top Row */}
         <View style={styles.headerTopRow}>
-          <Text style={styles.logo}>Moba Launcher</Text>
-          <TouchableOpacity 
+          <Text style={styles.logo}>PABG</Text>
+          <TouchableOpacity
             onPress={() => navigation.navigate('Profile')}
           >
             {user?.photoURL ? (
-              <Image 
-                source={{ uri: user.photoURL }} 
-                style={{ width: 28, height: 28, borderRadius: 14, borderWidth: 1.5, borderColor: Theme.colors.lime }} 
+              <Image
+                source={{ uri: user.photoURL }}
+                style={{ width: 28, height: 28, borderRadius: 14, borderWidth: 1.5, borderColor: Theme.colors.lime }}
               />
             ) : (
               <Ionicons name="person-circle-outline" size={26} color={Theme.colors.textPrimary} />

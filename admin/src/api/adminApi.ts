@@ -3,6 +3,8 @@ import { auth } from './firebase';
 // In production (Vercel), admin and API are same origin — no BASE_URL needed.
 // In local dev, the server still runs on :3000, so we keep it configurable.
 const BASE_URL = import.meta.env.VITE_SERVER_URL || '';
+const isLocal = BASE_URL.includes('localhost') || BASE_URL.includes('127.0.0.1');
+const API_PREFIX = isLocal ? '' : '/api';
 
 async function getAuthHeaders(): Promise<Record<string, string>> {
   const user = auth.currentUser;
@@ -18,14 +20,14 @@ async function getAuthHeaders(): Promise<Record<string, string>> {
 
 export const fetchManagedGames = async () => {
   const headers = await getAuthHeaders();
-  const response = await fetch(`${BASE_URL}/api/games`, { headers });
+  const response = await fetch(`${BASE_URL}${API_PREFIX}/games`, { headers });
   return response.json();
 };
 
 export const fetchExternalGames = async (category = '0', num = 20, page = 1) => {
   const headers = await getAuthHeaders();
   const response = await fetch(
-    `${BASE_URL}/api/admin?sub=gamemonetize&category=${category}&num=${num}&page=${page}`,
+    `${BASE_URL}${API_PREFIX}/admin?sub=gamemonetize&category=${category}&num=${num}&page=${page}`,
     { headers }
   );
   return response.json();
@@ -33,7 +35,7 @@ export const fetchExternalGames = async (category = '0', num = 20, page = 1) => 
 
 export const saveGame = async (gameData: any) => {
   const headers = await getAuthHeaders();
-  const response = await fetch(`${BASE_URL}/api/admin?sub=games`, {
+  const response = await fetch(`${BASE_URL}${API_PREFIX}/admin?sub=games`, {
     method: 'POST',
     headers,
     body: JSON.stringify(gameData),
@@ -43,7 +45,7 @@ export const saveGame = async (gameData: any) => {
 
 export const updateGame = async (gameId: string, updatedData: any) => {
   const headers = await getAuthHeaders();
-  const response = await fetch(`${BASE_URL}/api/admin?sub=games&id=${gameId}`, {
+  const response = await fetch(`${BASE_URL}${API_PREFIX}/admin?sub=games&id=${gameId}`, {
     method: 'PUT',
     headers,
     body: JSON.stringify(updatedData),
@@ -53,7 +55,7 @@ export const updateGame = async (gameId: string, updatedData: any) => {
 
 export const deleteGame = async (gameId: string) => {
   const headers = await getAuthHeaders();
-  const response = await fetch(`${BASE_URL}/api/admin?sub=games&id=${gameId}`, {
+  const response = await fetch(`${BASE_URL}${API_PREFIX}/admin?sub=games&id=${gameId}`, {
     method: 'DELETE',
     headers,
   });
@@ -64,13 +66,13 @@ export const deleteGame = async (gameId: string) => {
 
 export const fetchUsers = async () => {
   const headers = await getAuthHeaders();
-  const response = await fetch(`${BASE_URL}/api/users`, { headers });
+  const response = await fetch(`${BASE_URL}${API_PREFIX}/users`, { headers });
   return response.json();
 };
 
 export const updateUser = async (userId: string, userData: any) => {
   const headers = await getAuthHeaders();
-  const response = await fetch(`${BASE_URL}/api/admin?sub=users&id=${encodeURIComponent(userId)}`, {
+  const response = await fetch(`${BASE_URL}${API_PREFIX}/admin?sub=users&id=${encodeURIComponent(userId)}`, {
     method: 'PUT',
     headers,
     body: JSON.stringify(userData),
@@ -85,7 +87,7 @@ export const updateUserSuspension = async (
   durationDays?: number | null
 ) => {
   const headers = await getAuthHeaders();
-  const response = await fetch(`${BASE_URL}/api/admin?sub=suspension&id=${encodeURIComponent(userId)}`, {
+  const response = await fetch(`${BASE_URL}${API_PREFIX}/admin?sub=suspension&id=${encodeURIComponent(userId)}`, {
     method: 'PATCH',
     headers,
     body: JSON.stringify({ isSuspended, suspensionReason, durationDays }),
@@ -95,7 +97,7 @@ export const updateUserSuspension = async (
 
 export const deleteUser = async (userId: string) => {
   const headers = await getAuthHeaders();
-  const response = await fetch(`${BASE_URL}/api/admin?sub=users&id=${encodeURIComponent(userId)}`, {
+  const response = await fetch(`${BASE_URL}${API_PREFIX}/admin?sub=users&id=${encodeURIComponent(userId)}`, {
     method: 'DELETE',
     headers,
   });
@@ -118,12 +120,12 @@ export const fetchStats = async () => {
 
 export const fetchLeaderboard = async () => {
   const headers = await getAuthHeaders();
-  const response = await fetch(`${BASE_URL}/api/leaderboard`, { headers });
+  const response = await fetch(`${BASE_URL}${API_PREFIX}/leaderboard`, { headers });
   return response.json();
 };
 
 export const fetchTopGames = async () => {
   const headers = await getAuthHeaders();
-  const response = await fetch(`${BASE_URL}/api/games?sub=featured`, { headers });
+  const response = await fetch(`${BASE_URL}${API_PREFIX}/games?sub=featured`, { headers });
   return response.json();
 };

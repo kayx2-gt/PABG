@@ -7,6 +7,10 @@ import { auth, googleProvider } from '../api/firebase';
 const ALLOWED_ADMIN_EMAILS: string[] = [
   'appdevbsit@gmail.com',
   'kylematthewnnicor@gmail.com',
+  'soniomark412@gmail.com',
+  'anthonyojano50@gmail.com',
+  'jeaniouray21@gmail.com',
+  'dalidalysah@gmail.com',
 ];
 
 interface AuthContextType {

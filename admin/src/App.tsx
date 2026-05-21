@@ -11,7 +11,7 @@ import './App.css';
 const ProtectedLayout = ({ children }: { children: React.ReactNode }) => {
   const { user, loading, logout } = useAuth();
   const location = useLocation();
-  const [isSidebarOpen, setIsSidebarOpen] = React.useState(false);
+  const [isHovered, setIsHovered] = React.useState(false);
 
   if (loading) {
     return (
@@ -20,78 +20,59 @@ const ProtectedLayout = ({ children }: { children: React.ReactNode }) => {
       </div>
     );
   }
-  
+
   if (!user) return <Navigate to="/login" />;
 
   const navItems = [
-    { to: '/', label: '📊 Dashboard' },
-    { to: '/games', label: '🎮 Games' },
-    { to: '/users', label: '👥 Users' },
+    { to: '/', label: 'Dashboard', icon: '📊' },
+    { to: '/games', label: 'Games', icon: '🎮' },
+    { to: '/users', label: 'Users', icon: '👥' },
   ];
 
   return (
     <div className="admin-container">
-      {/* Mobile Header */}
-      <header className="mobile-header">
-        <button onClick={() => setIsSidebarOpen(true)} className="mobile-menu-btn">☰</button>
-        <span className="mobile-brand">PABG ADMIN</span>
-        <div className="mobile-user">
-          <span className="mobile-username">@{user.displayName || user.email?.split('@')[0]}</span>
-          <button onClick={logout} className="mobile-logout-btn">Logout</button>
-        </div>
-      </header>
+      <nav
+        className={`sidebar ${isHovered ? 'expanded' : 'collapsed'}`}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+      >
 
-      {/* Sidebar Overlay Backdrop */}
-      {isSidebarOpen && (
-        <div className="sidebar-overlay" onClick={() => setIsSidebarOpen(false)} />
-      )}
-
-      {/* Desktop & Mobile Sliding Sidebar */}
-      <nav className={`sidebar ${isSidebarOpen ? 'open' : ''}`}>
-        <div className="sidebar-close-row">
-          <button onClick={() => setIsSidebarOpen(false)} className="sidebar-close-btn">×</button>
-        </div>
         <div className="sidebar-header">
-          <h2>PABG</h2>
-          <p className="app-subtitle">Admin Panel</p>
-          <div className="user-info">
-            <p>@{user.displayName || user.email?.split('@')[0]}</p>
-            <button onClick={logout} className="logout-btn">Logout</button>
-          </div>
+          {isHovered && (
+            <>
+              <h2>PABG</h2>
+              <p className="app-subtitle">Admin Panel</p>
+            </>
+          )}
         </div>
+
         <ul>
           {navItems.map(item => (
             <li key={item.to}>
               <Link
                 to={item.to}
                 className={location.pathname === item.to ? 'active' : ''}
-                onClick={() => setIsSidebarOpen(false)}
               >
-                {item.label}
+                <span className="nav-icon">{item.icon}</span>
+                {isHovered && <span className="nav-label">{item.label}</span>}
               </Link>
             </li>
           ))}
         </ul>
-      </nav>
 
-      {/* Main Content */}
+        {/* User info moved here – below navigation, above logout */}
+        <div className="user-info">
+          {isHovered && <p>@{user.displayName || user.email?.split('@')[0]}</p>}
+        </div>
+
+        <button onClick={logout} className="logout-btn">
+          <span className="nav-icon">❌</span>
+          {isHovered && <span className="nav-label">Logout</span>}
+        </button>
+      </nav>
       <main className="content">
         {children}
       </main>
-
-      {/* Mobile Bottom Navigation */}
-      <nav className="mobile-nav">
-        {navItems.map(item => (
-          <Link
-            key={item.to}
-            to={item.to}
-            className={`mobile-nav-item ${location.pathname === item.to ? 'active' : ''}`}
-          >
-            <span className="mobile-nav-icon">{item.label.split(' ')[0]}</span>
-            <span className="mobile-nav-label">{item.label.split(' ')[1]}</span>
-          </Link>
-        ))}
-      </nav>
     </div>
   );
 };

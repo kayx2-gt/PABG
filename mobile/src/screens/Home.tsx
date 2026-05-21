@@ -135,7 +135,7 @@ const Home = ({ navigation }: any) => {
     <View>
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.logo}>Moba Launcher</Text>
+        <Text style={styles.logo}>PABG</Text>
         <View style={[styles.headerIcons, { alignItems: 'center' }]}>
           <TouchableOpacity
             onPress={() => navigation.navigate('Favorites')}
