@@ -4,6 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { WebView } from 'react-native-webview';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useIsFocused } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Game } from '../types/game';
 import { Theme } from '../utils/theme';
@@ -19,6 +20,7 @@ const GameDetails = ({ route, navigation }: any) => {
   const [showFullDesc, setShowFullDesc] = useState(false);
   const [videoY, setVideoY] = useState(0);
   const webViewRef = useRef<WebView>(null);
+  const isFocused = useIsFocused();
 
   React.useEffect(() => {
     loadStatus();
@@ -62,6 +64,7 @@ const GameDetails = ({ route, navigation }: any) => {
   };
 
   const handleScroll = (event: any) => {
+    if (!isFocused) return;
     const scrollY = event.nativeEvent.contentOffset.y;
     const screenHeight = event.nativeEvent.layoutMeasurement.height;
     
@@ -147,7 +150,7 @@ const GameDetails = ({ route, navigation }: any) => {
               style={styles.videoPlaceholder}
               onLayout={(e) => setVideoY(e.nativeEvent.layout.y + 400)} // Adding offset for header height
             >
-              {game.videoUrl ? (
+              {isFocused && game.videoUrl ? (
                 <WebView 
                   ref={webViewRef}
                   source={{ uri: game.videoUrl }} 

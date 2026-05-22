@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, FlatList, Image, TouchableOpacity, Alert, Activ
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Theme } from '../../utils/theme';
-import { fetchManagedGames, fetchExternalGames, saveGame, deleteGame } from '../../api/api';
+import { fetchManagedGames, fetchExternalGames, saveGame, deleteGame, updateGame } from '../../api/api';
 
 const AdminGames = () => {
   const [view, setView] = useState<'managed' | 'import'>('managed');
@@ -25,7 +25,7 @@ const AdminGames = () => {
       const data = await fetchManagedGames();
       setManagedGames(Array.isArray(data) ? data : []);
     } catch (error) {
-      console.error("Error loading managed games:", error);
+      console.error('Error loading managed games:', error);
     }
     setLoading(false);
   };
@@ -43,13 +43,10 @@ const AdminGames = () => {
 
   const handleSave = async (game: any) => {
     try {
-      const result = await saveGame({
-        ...game,
-        isNew: true,
-        isFeatured: false
-      });
+      const result = await saveGame({ ...game, isNew: true, isFeatured: false });
       if (result.success) {
         Alert.alert('Success', 'Game saved to Firestore!');
+        loadManagedGames();
       } else {
         Alert.alert('Error', result.error);
       }
@@ -59,31 +56,45 @@ const AdminGames = () => {
   };
 
   const handleDelete = async (game: any) => {
-    Alert.alert(
-      'Delete Game',
-      `Are you sure you want to delete "${game.title}"?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Delete', 
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              const result = await deleteGame(game.id);
-              if (result.success) {
-                Alert.alert('Success', 'Game deleted');
-                loadManagedGames();
-              } else {
-                Alert.alert('Error', result.error || 'Failed to delete game');
-              }
-            } catch (error) {
-              Alert.alert('Error', 'Failed to delete game');
+    Alert.alert('Delete Game', `Are you sure you want to delete "${game.title}"?`, [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Delete',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            const result = await deleteGame(game.id);
+            if (result.success) {
+              Alert.alert('Success', 'Game deleted');
+              loadManagedGames();
+            } else {
+              Alert.alert('Error', result.error || 'Failed to delete game');
             }
+          } catch (e) {
+            Alert.alert('Error', 'Failed to delete game');
           }
-        }
-      ]
-    );
+        },
+      },
+    ]);
   };
+
+  const handleQuickUpdate = async (game: any) => {
+  try {
+    // Example: toggle featured status as an update (customize as needed)
+    const updatedData = { isFeatured: !game.isFeatured };
+    const result = await updateGame(game.id, updatedData);
+    // Assume API returns { success: true } on success or { error: "msg" } on failure
+    if (result && result.success) {
+      Alert.alert('Success', 'Game updated');
+      loadManagedGames();
+    } else {
+      const errMsg = result?.error || 'Update failed';
+      Alert.alert('Error', errMsg);
+    }
+  } catch (e) {
+    Alert.alert('Error', 'Failed to update game');
+  }
+};;
 
   const renderGameItem = ({ item }: { item: any }) => (
     <View style={styles.gameCard}>
@@ -98,9 +109,14 @@ const AdminGames = () => {
       </View>
       <View style={styles.actionContainer}>
         {view === 'managed' ? (
-          <TouchableOpacity style={[styles.actionBtn, styles.deleteBtn]} onPress={() => handleDelete(item)}>
-            <Ionicons name="trash" size={20} color="#FF4B4B" />
-          </TouchableOpacity>
+          <>
+            <TouchableOpacity style={[styles.actionBtn, styles.deleteBtn]} onPress={() => handleDelete(item)}>
+              <Ionicons name="trash" size={20} color="#FF4B4B" />
+            </TouchableOpacity>
+            <TouchableOpacity style={[styles.actionBtn, { backgroundColor: 'rgba(212, 255, 0, 0.1)' }]} onPress={() => handleQuickUpdate(item)}>
+              <Ionicons name="refresh" size={20} color={Theme.colors.lime} />
+            </TouchableOpacity>
+          </>
         ) : (
           <TouchableOpacity style={[styles.actionBtn, styles.saveBtn]} onPress={() => handleSave(item)}>
             <Ionicons name="cloud-download" size={20} color={Theme.colors.lime} />
@@ -115,22 +131,14 @@ const AdminGames = () => {
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Games</Text>
       </View>
-      
       <View style={styles.tabContainer}>
-        <TouchableOpacity 
-          style={[styles.tab, view === 'managed' && styles.activeTab]}
-          onPress={() => setView('managed')}
-        >
+        <TouchableOpacity style={[styles.tab, view === 'managed' && styles.activeTab]} onPress={() => setView('managed')}>
           <Text style={[styles.tabText, view === 'managed' && styles.activeTabText]}>Managed</Text>
         </TouchableOpacity>
-        <TouchableOpacity 
-          style={[styles.tab, view === 'import' && styles.activeTab]}
-          onPress={() => setView('import')}
-        >
+        <TouchableOpacity style={[styles.tab, view === 'import' && styles.activeTab]} onPress={() => setView('import')}>
           <Text style={[styles.tabText, view === 'import' && styles.activeTabText]}>Import</Text>
         </TouchableOpacity>
       </View>
-
       {loading ? (
         <ActivityIndicator size="large" color={Theme.colors.lime} style={styles.loader} />
       ) : (
@@ -139,9 +147,7 @@ const AdminGames = () => {
           keyExtractor={(item, index) => item.id || index.toString()}
           renderItem={renderGameItem}
           contentContainerStyle={styles.listContainer}
-          ListEmptyComponent={
-            <Text style={styles.emptyText}>No games found.</Text>
-          }
+          ListEmptyComponent={<Text style={styles.emptyText}>No games found.</Text>}
         />
       )}
     </SafeAreaView>
@@ -249,6 +255,7 @@ const styles = StyleSheet.create({
     backgroundColor: Theme.colors.elevated,
     justifyContent: 'center',
     alignItems: 'center',
+    marginBottom: 5,
   },
   deleteBtn: {
     backgroundColor: 'rgba(255, 75, 75, 0.1)',
@@ -263,7 +270,7 @@ const styles = StyleSheet.create({
     color: Theme.colors.textSecondary,
     textAlign: 'center',
     marginTop: 50,
-  }
+  },
 });
 
 export default AdminGames;

@@ -77,6 +77,8 @@ const Profile = ({ navigation }: any) => {
     <TouchableOpacity
       style={styles.recentCard}
       onPress={() => navigation.navigate('GameDetails', { game: item })}
+      disabled={isAdmin}
+      activeOpacity={isAdmin ? 1 : 0.7}
     >
       <Image source={{ uri: item.thumbnail }} style={styles.recentThumbnail} />
       <LinearGradient

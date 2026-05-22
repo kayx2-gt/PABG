@@ -291,7 +291,12 @@ const Settings = ({ navigation }: any) => {
                     Alert.alert(
                       'Role Switched', 
                       'Successfully logged in as User! Switched to player interface.',
-                      [{ text: 'OK', onPress: () => navigation.navigate('Main') }]
+                      [{ text: 'OK', onPress: () => {
+                        navigation.reset({
+                          index: 0,
+                          routes: [{ name: 'Main' }],
+                        });
+                      }}]
                     );
                   } else {
                     await AsyncStorage.setItem('activeRole', 'admin');
@@ -299,7 +304,12 @@ const Settings = ({ navigation }: any) => {
                     Alert.alert(
                       'Role Switched', 
                       'Successfully logged in as Admin! Switched to management dashboard.',
-                      [{ text: 'OK', onPress: () => navigation.navigate('AdminMain') }]
+                      [{ text: 'OK', onPress: () => {
+                        navigation.reset({
+                          index: 0,
+                          routes: [{ name: 'AdminMain' }],
+                        });
+                      }}]
                     );
                   }
                 } catch (error) {

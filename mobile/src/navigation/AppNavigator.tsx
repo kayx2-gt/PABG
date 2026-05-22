@@ -145,15 +145,9 @@ const AppNavigator = () => {
         {user ? (
           <>
             {isAdmin ? (
-              <>
-                <Stack.Screen name="AdminMain" component={AdminTabs} />
-                <Stack.Screen name="Main" component={AppTabs} />
-              </>
+              <Stack.Screen name="AdminMain" component={AdminTabs} />
             ) : (
-              <>
-                <Stack.Screen name="Main" component={AppTabs} />
-                <Stack.Screen name="AdminMain" component={AdminTabs} />
-              </>
+              <Stack.Screen name="Main" component={AppTabs} />
             )}
             <Stack.Screen name="GameDetails" component={GameDetails} />
             <Stack.Screen name="GamePlayer" component={GamePlayer} />
