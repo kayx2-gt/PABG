@@ -11,6 +11,8 @@ const ALLOWED_ADMIN_EMAILS: string[] = [
   'anthonyojano50@gmail.com',
   'jeaniouray21@gmail.com',
   'dalidalysah@gmail.com',
+  'santiagojuzin05@gmail.com',
+  'Chansalivio17@gmail.com',
 ];
 
 interface AuthContextType {
