@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { db, serverTimestamp, increment } from '../lib/firebase';
-import { verifyFirebaseToken, AuthRequest } from '../middleware/auth';
+import { verifyFirebaseToken, AuthRequest, ALLOWED_ADMIN_EMAILS, isAdmin } from '../middleware/auth';
 import { requireActiveUser } from '../middleware/requireActiveUser';
 
 const router = Router();
@@ -165,7 +165,8 @@ router.get('/me', verifyFirebaseToken, async (req: AuthRequest, res) => {
       }
     }
 
-    res.json({ id: doc.id, ...data });
+    const role = (data.email && ALLOWED_ADMIN_EMAILS.includes(data.email)) ? 'admin' : 'user';
+    res.json({ id: doc.id, ...data, role });
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch user profile' });
   }
@@ -175,6 +176,11 @@ router.post('/claim-mission', verifyFirebaseToken, requireActiveUser, async (req
   const { missionId } = req.body;
   const uid = req.user?.uid;
   if (!uid) return res.status(401).json({ error: 'Unauthorized' });
+
+  // Restrict guest/anonymous users from missions
+  if (req.user?.firebase?.sign_in_provider === 'anonymous' || (req.user?.email && req.user.email.endsWith('@mobalauncher.com'))) {
+    return res.status(403).json({ error: 'Missions are only available for Google-linked accounts. Please sign in with Google to participate!' });
+  }
 
   try {
     const userRef = db.collection('users').doc(uid);
@@ -219,7 +225,8 @@ router.post('/claim-mission', verifyFirebaseToken, requireActiveUser, async (req
   }
 });
 
-router.get('/', verifyFirebaseToken, async (req, res) => {
+// GET /users (all users — admin)
+router.get('/', verifyFirebaseToken, isAdmin, async (req: AuthRequest, res) => {
   try {
     const snapshot = await db.collection('users').get();
     const users = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));

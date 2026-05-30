@@ -110,17 +110,21 @@ const Games = () => {
 
   const handleQuickUpdate = async (game: any) => {
     try {
-      const result = await updateGame(game.id, {});
-      if (result.success) {
+      // Toggle featured status while preserving all required fields
+      const updatedData = { ...game, isFeatured: !game.isFeatured };
+      const result = await updateGame(game.id, updatedData);
+      if (result && result.success) {
         alert('Game updated');
         loadManagedGames();
       } else {
-        alert('Update failed: ' + (result.error || 'Unknown error'));
+        alert('Update failed: ' + (result?.error || 'Unknown error'));
       }
-    } catch {
+    } catch (e) {
+      console.error('Update error:', e);
       alert('Error updating game');
     }
   };
+
 
   return (
     <div className="games-page">

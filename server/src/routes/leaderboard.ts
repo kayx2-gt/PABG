@@ -8,15 +8,24 @@ router.get('/', verifyFirebaseToken, async (req, res) => {
   try {
     const snapshot = await db.collection('users')
       .orderBy('totalPoints', 'desc')
-      .limit(20)
+      .limit(100)
       .get();
     
     const usersMap = new Map();
     
     snapshot.docs.forEach(doc => {
       const data = doc.data();
-      const email = data.email?.toLowerCase().trim();
+      const email = (data.email || '').toLowerCase().trim();
+      
+      // Filter out Guest Mode users (@mobalauncher.com)
+      if (email.endsWith('@mobalauncher.com')) {
+        return;
+      }
+
       const totalPoints = data.totalPoints || 0;
+      // If no points, skip
+      if (totalPoints <= 0) return;
+
       const key = email || doc.id;
       
       if (!usersMap.has(key) || totalPoints > usersMap.get(key).totalPoints) {

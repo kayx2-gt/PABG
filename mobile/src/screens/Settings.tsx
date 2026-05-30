@@ -9,14 +9,8 @@ import { useAuth } from '../context/AuthContext';
 import { auth } from '../api/firebase';
 import { Theme } from '../utils/theme';
 
-const ALLOWED_ADMIN_EMAILS: string[] = [
-  'appdevbsit@gmail.com',
-  'kylematthewnnicor@gmail.com',
-];
-
 const Settings = ({ navigation }: any) => {
-  const { user, isAdmin, setIsAdmin } = useAuth();
-  const isAllowedAdmin = user?.email ? ALLOWED_ADMIN_EMAILS.includes(user.email) : false;
+  const { user, isAdmin, isAllowedAdmin, setIsAdmin } = useAuth();
 
   // Settings state
   const [notifications, setNotifications] = useState(true);
@@ -283,38 +277,53 @@ const Settings = ({ navigation }: any) => {
           <View style={styles.adminSwapSection}>
             <TouchableOpacity
               style={styles.adminSwapButton}
-              onPress={async () => {
-                try {
-                  if (isAdmin) {
-                    await AsyncStorage.setItem('activeRole', 'user');
-                    setIsAdmin(false);
-                    Alert.alert(
-                      'Role Switched', 
-                      'Successfully logged in as User! Switched to player interface.',
-                      [{ text: 'OK', onPress: () => {
-                        navigation.reset({
-                          index: 0,
-                          routes: [{ name: 'Main' }],
-                        });
-                      }}]
-                    );
-                  } else {
-                    await AsyncStorage.setItem('activeRole', 'admin');
-                    setIsAdmin(true);
-                    Alert.alert(
-                      'Role Switched', 
-                      'Successfully logged in as Admin! Switched to management dashboard.',
-                      [{ text: 'OK', onPress: () => {
-                        navigation.reset({
-                          index: 0,
-                          routes: [{ name: 'AdminMain' }],
-                        });
-                      }}]
-                    );
-                  }
-                } catch (error) {
-                  Alert.alert('Error', 'Failed to save login preferences.');
-                }
+              onPress={() => {
+                Alert.alert(
+                  isAdmin ? 'Switch to User Role' : 'Switch to Admin Role',
+                  isAdmin 
+                    ? 'Are you sure you want to switch to the player interface? You will lose access to management tools.'
+                    : 'Are you sure you want to switch to the admin dashboard? You will be able to manage games and users.',
+                  [
+                    { text: 'Cancel', style: 'cancel' },
+                    { 
+                      text: 'Switch Role', 
+                      style: 'default',
+                      onPress: async () => {
+                        try {
+                          if (isAdmin) {
+                            await AsyncStorage.setItem('activeRole', 'user');
+                            setIsAdmin(false);
+                            Alert.alert(
+                              'Role Switched', 
+                              'Successfully logged in as User! Switched to player interface.',
+                              [{ text: 'OK', onPress: () => {
+                                navigation.reset({
+                                  index: 0,
+                                  routes: [{ name: 'Main' }],
+                                });
+                              }}]
+                            );
+                          } else {
+                            await AsyncStorage.setItem('activeRole', 'admin');
+                            setIsAdmin(true);
+                            Alert.alert(
+                              'Role Switched', 
+                              'Successfully logged in as Admin! Switched to management dashboard.',
+                              [{ text: 'OK', onPress: () => {
+                                navigation.reset({
+                                  index: 0,
+                                  routes: [{ name: 'AdminMain' }],
+                                });
+                              }}]
+                            );
+                          }
+                        } catch (error) {
+                          Alert.alert('Error', 'Failed to save login preferences.');
+                        }
+                      }
+                    }
+                  ]
+                );
               }}
             >
               <Ionicons 

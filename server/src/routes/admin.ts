@@ -1,14 +1,14 @@
 import { Router } from 'express';
 import { db, serverTimestamp } from '../lib/firebase';
 import { fetchGamesFromAPI } from '../lib/gamemonetize';
-import { verifyFirebaseToken } from '../middleware/auth';
+import { verifyFirebaseToken, isAdmin } from '../middleware/auth';
 
 const router = Router();
 const GAMES_COLLECTION = 'games';
 
 // We route everything through a single handler to mirror the Vercel serverless function behavior
 // which relies on the ?sub= query parameter for routing.
-router.all('/', verifyFirebaseToken, async (req, res) => {
+router.all('/', verifyFirebaseToken, isAdmin, async (req, res) => {
   const { sub } = req.query;
 
   // GET /admin?sub=gamemonetize

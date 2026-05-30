@@ -14,6 +14,9 @@ import {
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
+import { GoogleAuthProvider, signInWithCredential } from 'firebase/auth';
+import { GoogleSignin } from '@react-native-google-signin/google-signin';
+import { auth } from '../api/firebase';
 import { fetchLeaderboard, fetchUserProfile, upsertUser, claimMission } from '../api/api';
 import { useAuth } from '../context/AuthContext';
 import { Theme } from '../utils/theme';
@@ -316,6 +319,7 @@ const Leaderboard = ({ navigation }: any) => {
   const [claimingId, setClaimingId] = useState<string | null>(null);
   const [claimingAll, setClaimingAll] = useState(false);
   const [activeTab, setActiveTab] = useState<'rankings' | 'missions'>('rankings');
+  const [loggingIn, setLoggingIn] = useState(false);
 
   const tabAnim = useRef(new Animated.Value(0)).current;
 
@@ -324,17 +328,55 @@ const Leaderboard = ({ navigation }: any) => {
     Animated.spring(tabAnim, { toValue: tab === 'rankings' ? 0 : 1, useNativeDriver: false, tension: 60, friction: 10 }).start();
   };
 
+  const handleGoogleLogin = async () => {
+    setLoggingIn(true);
+    try {
+      await GoogleSignin.hasPlayServices();
+      const userInfo = await GoogleSignin.signIn();
+      const idToken = userInfo.data?.idToken;
+
+      if (!idToken) throw new Error('No ID Token found');
+
+      // Logout guest account before logging in with Google
+      if (user?.isAnonymous) {
+        await auth.signOut();
+      }
+
+      const credential = GoogleAuthProvider.credential(idToken);
+      const userCredential = await signInWithCredential(auth, credential);
+      const firebaseUser = userCredential.user;
+
+      if (firebaseUser.displayName && firebaseUser.email) {
+        const photo = userInfo.data?.user?.photo || firebaseUser.photoURL || undefined;
+        await upsertUser(firebaseUser.displayName, firebaseUser.email, photo);
+      }
+      
+      // Data will be reloaded via AuthContext effect
+    } catch (error: any) {
+      console.error('Leaderboard Google Login Error:', error);
+      Alert.alert('Login Error', error.message || 'Failed to sign in with Google');
+    } finally {
+      setLoggingIn(false);
+    }
+  };
+
   const loadData = async (forceUpsert = false) => {
     try {
       let profileRes = await fetchUserProfile().catch(() => null);
       if (!profileRes || !profileRes.missions || forceUpsert) {
-        if (user) {
+        // Only upsert for non-anonymous users to minimize database flooding
+        if (user && !user.isAnonymous) {
           await upsertUser(user.displayName || 'Gamer', user.email || '', user.photoURL || undefined);
           profileRes = await fetchUserProfile().catch(() => null);
         }
       }
       const leaderboardRes = await fetchLeaderboard().catch(() => []);
-      const sortedData = [...leaderboardRes].sort((a, b) => (b.totalPoints || 0) - (a.totalPoints || 0));
+      // Client-side filter as secondary protection
+      const filteredData = Array.isArray(leaderboardRes) 
+        ? leaderboardRes.filter(u => u.email && !u.email.toLowerCase().endsWith('@mobalauncher.com'))
+        : [];
+      
+      const sortedData = [...filteredData].sort((a, b) => (b.totalPoints || 0) - (a.totalPoints || 0));
       setData(sortedData);
       setMyProfile(profileRes);
     } catch (e) {
@@ -430,6 +472,34 @@ const Leaderboard = ({ navigation }: any) => {
 
   // ─── Render Missions Tab ──────────────────────────────────────────
   const renderMissions = () => {
+    if (user?.isAnonymous) {
+      return (
+        <View style={styles.restrictedContainer}>
+          <LinearGradient
+            colors={['rgba(200, 255, 0, 0.1)', 'rgba(200, 255, 0, 0.02)']}
+            style={styles.restrictedCard}
+          >
+            <Text style={styles.restrictedIcon}>🔒</Text>
+            <Text style={styles.restrictedTitle}>Missions Locked</Text>
+            <Text style={styles.restrictedDesc}>
+              Guest users cannot participate in missions. Sign in with your Google account to start earning points, claim rewards, and appear on the leaderboards!
+            </Text>
+            <TouchableOpacity
+              style={styles.restrictedBtn}
+              onPress={handleGoogleLogin}
+              disabled={loggingIn}
+            >
+              {loggingIn ? (
+                <ActivityIndicator color={Theme.colors.background} />
+              ) : (
+                <Text style={styles.restrictedBtnText}>Sign in with Google</Text>
+              )}
+            </TouchableOpacity>
+          </LinearGradient>
+        </View>
+      );
+    }
+
     if (!myData || !myData.missions) return renderEmpty();
     const m = myData.missions;
 
@@ -567,8 +637,8 @@ const Leaderboard = ({ navigation }: any) => {
           />
         )}
 
-        {/* Sticky Rank Card */}
-        {!loading && activeTab === 'rankings' && myData && (
+        {/* Sticky Rank Card - Only for non-anonymous users */}
+        {!user?.isAnonymous && !loading && activeTab === 'rankings' && myData && (
           <View style={[styles.stickyContainer, { bottom: insets.bottom > 0 ? insets.bottom + 80 : 100 }]}>
             <View style={styles.myRankCard}>
               <View style={styles.avatarMini}>
@@ -760,6 +830,48 @@ const styles = StyleSheet.create({
   claimedText: { color: 'rgba(39,200,100,0.9)', fontSize: 11, fontWeight: '700' },
   pendingBadge: { backgroundColor: 'rgba(255,255,255,0.06)', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 12 },
   pendingText: { color: Theme.colors.textSecondary, fontSize: 11, fontWeight: '600' },
+
+  // ─── Restricted UI ───────────────────────────────────────────────
+  restrictedContainer: {
+    flex: 1,
+    padding: 20,
+    justifyContent: 'center',
+  },
+  restrictedCard: {
+    borderRadius: 24,
+    padding: 30,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(200, 255, 0, 0.2)',
+  },
+  restrictedIcon: {
+    fontSize: 48,
+    marginBottom: 16,
+  },
+  restrictedTitle: {
+    fontSize: 22,
+    fontWeight: '900',
+    color: Theme.colors.textPrimary,
+    marginBottom: 12,
+  },
+  restrictedDesc: {
+    fontSize: 14,
+    color: Theme.colors.textSecondary,
+    textAlign: 'center',
+    lineHeight: 20,
+    marginBottom: 24,
+  },
+  restrictedBtn: {
+    backgroundColor: Theme.colors.lime,
+    paddingHorizontal: 24,
+    paddingVertical: 14,
+    borderRadius: 14,
+  },
+  restrictedBtnText: {
+    color: Theme.colors.background,
+    fontSize: 14,
+    fontWeight: '900',
+  },
 
   // Skeleton
   skeletonRow: { flexDirection: 'row', padding: 14, backgroundColor: 'rgba(255,255,255,0.04)', borderRadius: 20, marginBottom: 10, alignItems: 'center' },

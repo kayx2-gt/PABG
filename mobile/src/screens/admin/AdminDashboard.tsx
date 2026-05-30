@@ -9,13 +9,16 @@ import {
   ActivityIndicator, 
   Alert, 
   Dimensions, 
-  FlatList 
+  FlatList,
+  RefreshControl
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { WebView } from 'react-native-webview';
 import { Theme } from '../../utils/theme';
 import { useAuth } from '../../context/AuthContext';
+import { AdminDashboardSkeleton } from '../../components/SkeletonLoader';
+import RefreshSpinner from '../../components/RefreshSpinner';
 import { 
   fetchFeaturedGames, 
   fetchLeaderboard, 
@@ -40,10 +43,13 @@ const HeroCarousel = ({ games }: { games: any[] }) => {
   const [active, setActive] = useState(0);
   const [playing, setPlaying] = useState(false);
   const timer = useRef<ReturnType<typeof setInterval> | null>(null);
+  const listRef = useRef<FlatList>(null);
 
   const next = useCallback(() => {
-    setActive(prev => (prev + 1) % Math.max(games.length, 1));
-  }, [games.length]);
+    const nextIndex = (active + 1) % Math.max(games.length, 1);
+    setActive(nextIndex);
+    listRef.current?.scrollToIndex({ index: nextIndex, animated: true });
+  }, [games.length, active]);
 
   const startTimer = useCallback(() => {
     if (timer.current) clearInterval(timer.current);
@@ -66,6 +72,16 @@ const HeroCarousel = ({ games }: { games: any[] }) => {
     setPlaying(false);
   }, [active]);
 
+  const handleScroll = (event: any) => {
+    const slideSize = event.nativeEvent.layoutMeasurement.width;
+    const offset = event.nativeEvent.contentOffset.x;
+    const index = Math.round(offset / slideSize);
+    if (index !== active && index >= 0 && index < games.length) {
+      setActive(index);
+      setPlaying(false);
+    }
+  };
+
   if (!games.length) {
     return (
       <View style={styles.heroEmpty}>
@@ -75,90 +91,104 @@ const HeroCarousel = ({ games }: { games: any[] }) => {
     );
   }
 
-  const game = games[active];
+  const renderItem = ({ item, index }: { item: any, index: number }) => {
+    // Map watch gameplay URLs to embed urls if they contain watch?v=
+    let videoEmbedUrl = item.videoUrl;
+    if (videoEmbedUrl && videoEmbedUrl.includes('youtube.com/watch?v=')) {
+      videoEmbedUrl = videoEmbedUrl.replace('watch?v=', 'embed/');
+    }
 
-  // Map watch gameplay URLs to embed urls if they contain watch?v=
-  let videoEmbedUrl = game.videoUrl;
-  if (videoEmbedUrl && videoEmbedUrl.includes('youtube.com/watch?v=')) {
-    videoEmbedUrl = videoEmbedUrl.replace('watch?v=', 'embed/');
-  }
+    return (
+      <View style={[styles.heroCard, { width: width - 40, marginHorizontal: 20 }, playing && active === index && styles.heroCardPlaying]}>
+        {/* Backdrop Layer */}
+        {playing && active === index && videoEmbedUrl ? (
+          <View style={styles.webViewContainer}>
+            <WebView
+              source={{ uri: `${videoEmbedUrl}?autoplay=1&controls=1&modestbranding=1` }}
+              style={styles.heroWebView}
+              allowsFullscreenVideo={true}
+              mediaPlaybackRequiresUserAction={false}
+              javaScriptEnabled={true}
+              domStorageEnabled={true}
+            />
+            <TouchableOpacity 
+              style={styles.closeVideoButton} 
+              onPress={() => setPlaying(false)}
+            >
+              <Ionicons name="close" size={20} color="#FFF" />
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <View style={styles.heroWrapper}>
+            <Image 
+              source={{ uri: item.thumbnail }} 
+              style={styles.heroBgImage} 
+              blurRadius={3}
+            />
+            <View style={styles.heroOverlay} />
 
-  return (
-    <View style={[styles.heroCard, playing && styles.heroCardPlaying]}>
-      {/* Backdrop Layer */}
-      {playing && videoEmbedUrl ? (
-        <View style={styles.webViewContainer}>
-          <WebView
-            source={{ uri: `${videoEmbedUrl}?autoplay=1&controls=1&modestbranding=1` }}
-            style={styles.heroWebView}
-            allowsFullscreenVideo={true}
-            mediaPlaybackRequiresUserAction={false}
-            javaScriptEnabled={true}
-            domStorageEnabled={true}
-          />
-          <TouchableOpacity 
-            style={styles.closeVideoButton} 
-            onPress={() => setPlaying(false)}
-          >
-            <Ionicons name="close" size={20} color="#FFF" />
-          </TouchableOpacity>
-        </View>
-      ) : (
-        <View style={styles.heroWrapper}>
-          <Image 
-            source={{ uri: game.thumbnail }} 
-            style={styles.heroBgImage} 
-            blurRadius={3}
-          />
-          <View style={styles.heroOverlay} />
-
-          {/* Slide Content */}
-          <View style={styles.heroContent}>
-            <View style={styles.heroInfo}>
-              <Text style={styles.heroRank}>#{active + 1} MOST PLAYED</Text>
-              <Text style={styles.heroTitle} numberOfLines={2}>{game.title}</Text>
-              
-              <View style={styles.heroMetaRow}>
-                <View style={styles.heroCategoryPill}>
-                  <Text style={styles.heroCategoryText}>{game.category}</Text>
+            {/* Slide Content */}
+            <View style={styles.heroContent}>
+              <View style={styles.heroInfo}>
+                <Text style={styles.heroRank}>#{index + 1} MOST PLAYED</Text>
+                <Text style={styles.heroTitle} numberOfLines={2}>{item.title}</Text>
+                
+                <View style={styles.heroMetaRow}>
+                  <View style={styles.heroCategoryPill}>
+                    <Text style={styles.heroCategoryText}>{item.category}</Text>
+                  </View>
+                  <Text style={styles.heroPlaysText}>▶ {item.playCount || 0} plays</Text>
                 </View>
-                <Text style={styles.heroPlaysText}>▶ {game.playCount || 0} plays</Text>
+
+                {item.videoUrl ? (
+                  <TouchableOpacity 
+                    style={styles.watchButton}
+                    onPress={() => setPlaying(true)}
+                  >
+                    <Ionicons name="play" size={14} color="#0D0D1A" style={{ marginRight: 6 }} />
+                    <Text style={styles.watchButtonText}>Watch Gameplay</Text>
+                  </TouchableOpacity>
+                ) : null}
               </View>
 
-              {game.videoUrl ? (
-                <TouchableOpacity 
-                  style={styles.watchButton}
-                  onPress={() => setPlaying(true)}
-                >
-                  <Ionicons name="play" size={14} color="#0D0D1A" style={{ marginRight: 6 }} />
-                  <Text style={styles.watchButtonText}>Watch Gameplay</Text>
-                </TouchableOpacity>
-              ) : null}
+              {/* Float Thumbnail Right */}
+              <Image 
+                source={{ uri: item.thumbnail }} 
+                style={styles.heroThumb}
+              />
             </View>
 
-            {/* Float Thumbnail Right */}
-            <Image 
-              source={{ uri: game.thumbnail }} 
-              style={styles.heroThumb}
-            />
+            {/* Dots Indicator */}
+            <View style={styles.dotsContainer}>
+              {games.map((_, i) => (
+                <View
+                  key={i}
+                  style={[styles.dot, i === active && styles.activeDot]}
+                />
+              ))}
+            </View>
           </View>
+        )}
+      </View>
+    );
+  };
 
-          {/* Dots Indicator */}
-          <View style={styles.dotsContainer}>
-            {games.map((_, i) => (
-              <TouchableOpacity
-                key={i}
-                style={[styles.dot, i === active && styles.activeDot]}
-                onPress={() => {
-                  setActive(i);
-                  setPlaying(false);
-                }}
-              />
-            ))}
-          </View>
-        </View>
-      )}
-    </View>
+  return (
+    <FlatList
+      ref={listRef}
+      data={games}
+      renderItem={renderItem}
+      horizontal
+      pagingEnabled
+      showsHorizontalScrollIndicator={false}
+      onMomentumScrollEnd={handleScroll}
+      keyExtractor={(item, index) => item.id || index.toString()}
+      getItemLayout={(_, index) => ({
+        length: width,
+        offset: width * index,
+        index,
+      })}
+    />
   );
 };
 
@@ -224,11 +254,21 @@ const AdminDashboard = ({ navigation }: any) => {
 
   const [savingId, setSavingId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     loadDashboardData();
     loadExternalGames(1);
   }, []);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await Promise.all([
+      loadDashboardData(),
+      loadExternalGames(1)
+    ]);
+    setRefreshing(false);
+  };
 
   const loadDashboardData = async () => {
     try {
@@ -317,15 +357,15 @@ const AdminDashboard = ({ navigation }: any) => {
 
   if (loading) {
     return (
-      <SafeAreaView style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={Theme.colors.lime} />
-        <Text style={styles.loadingText}>Loading Dashboard…</Text>
+      <SafeAreaView style={styles.container}>
+        <AdminDashboardSkeleton />
       </SafeAreaView>
     );
   }
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+      <RefreshSpinner refreshing={refreshing} />
       {/* Header */}
       <View style={styles.header}>
         <View>
@@ -350,6 +390,14 @@ const AdminDashboard = ({ navigation }: any) => {
         style={styles.scrollView} 
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl 
+            refreshing={refreshing} 
+            onRefresh={onRefresh} 
+            tintColor="transparent" 
+            colors={['transparent']} 
+          />
+        }
       >
         {/* Row 1: Hero Carousel (Has margin inside component style) */}
         <HeroCarousel games={topGames} />
@@ -359,12 +407,17 @@ const AdminDashboard = ({ navigation }: any) => {
 
         {/* Row 3: Available Games (GameMonetize Row) */}
         <View style={styles.section}>
-          <View style={[styles.sectionTitleBlock, { marginHorizontal: 20 }]}>
-            <View style={styles.indicatorBubble} />
-            <View>
-              <Text style={styles.sectionTitleText}>Available Games</Text>
-              <Text style={styles.sectionSubtitleText}>From GameMonetize — swipe to explore</Text>
+          <View style={styles.sectionHeaderRow}>
+            <View style={styles.sectionTitleBlock}>
+              <View style={styles.indicatorBubble} />
+              <View>
+                <Text style={styles.sectionTitleText}>Available Games</Text>
+                <Text style={styles.sectionSubtitleText}>From GameMonetize — swipe to explore</Text>
+              </View>
             </View>
+            <TouchableOpacity onPress={() => navigation.navigate('AdminGames', { view: 'import' })}>
+              <Text style={styles.viewAll}>View All</Text>
+            </TouchableOpacity>
           </View>
 
           <FlatList
@@ -416,12 +469,17 @@ const AdminDashboard = ({ navigation }: any) => {
 
         {/* Row 4: App Game Library (Horizontal scrollable Row) */}
         <View style={styles.section}>
-          <View style={[styles.sectionTitleBlock, { marginHorizontal: 20 }]}>
-            <Ionicons name="folder-open-outline" size={16} color={Theme.colors.lime} style={{ marginRight: 6 }} />
-            <View>
-              <Text style={styles.sectionTitleText}>App Game Library</Text>
-              <Text style={styles.sectionSubtitleText}>{appGames.length} active games in the app</Text>
+          <View style={styles.sectionHeaderRow}>
+            <View style={styles.sectionTitleBlock}>
+              <Ionicons name="folder-open-outline" size={16} color={Theme.colors.lime} style={{ marginRight: 6 }} />
+              <View>
+                <Text style={styles.sectionTitleText}>App Game Library</Text>
+                <Text style={styles.sectionSubtitleText}>{appGames.length} active games in the app</Text>
+              </View>
             </View>
+            <TouchableOpacity onPress={() => navigation.navigate('AdminGames', { view: 'managed' })}>
+              <Text style={styles.viewAll}>View All</Text>
+            </TouchableOpacity>
           </View>
 
           {appGames.length === 0 ? (
@@ -788,6 +846,17 @@ const styles = StyleSheet.create({
   sectionTitleBlock: {
     flexDirection: 'row',
     alignItems: 'center',
+  },
+  sectionHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginHorizontal: 20,
+  },
+  viewAll: {
+    fontSize: Theme.typography.viewAll.size,
+    fontWeight: Theme.typography.viewAll.weight,
+    color: Theme.colors.lime,
   },
   indicatorBubble: {
     width: 10,

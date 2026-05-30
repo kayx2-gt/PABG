@@ -65,7 +65,7 @@ const ProtectedLayout = ({ children }: { children: React.ReactNode }) => {
           {isHovered && <p>@{user.displayName || user.email?.split('@')[0]}</p>}
         </div>
 
-        <button onClick={logout} className="logout-btn">
+        <button onClick={() => { if (window.confirm('Are you sure you want to logout?')) logout(); }} className="logout-btn">
           <span className="nav-icon">❌</span>
           {isHovered && <span className="nav-label">Logout</span>}
         </button>

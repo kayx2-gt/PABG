@@ -15,10 +15,16 @@ const LoginScreen = ({ navigation }: any) => {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    GoogleSignin.configure({
-      webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
-      offlineAccess: true,
-    });
+    try {
+      if (process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID) {
+        GoogleSignin.configure({
+          webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
+          offlineAccess: true,
+        });
+      }
+    } catch (error) {
+      console.error('Google Sign-In configuration error:', error);
+    }
   }, []);
 
   const handleGoogleLogin = async () => {
@@ -46,6 +52,14 @@ const LoginScreen = ({ navigation }: any) => {
       } else if (error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
         Alert.alert('Error', 'Google Play Services not available or outdated');
       } else {
+        // If the error indicates suspension, sign out from Google to allow account switching
+        if (error.message.toLowerCase().includes('suspended')) {
+          try {
+            await GoogleSignin.signOut();
+          } catch (e) {
+            console.warn('Google SignOut error after suspension detection:', e);
+          }
+        }
         Alert.alert('Google Login Error', error.message);
       }
     } finally {
@@ -74,8 +88,9 @@ const LoginScreen = ({ navigation }: any) => {
       // Update the anonymous Firebase user's profile with the stored guest name
       await updateProfile(user, { displayName: guestName });
 
-      // Register or fetch the existing guest user in the backend
-      await upsertUser(guestName, guestEmail);
+      // NOTE: We no longer call upsertUser for guests here to minimize database flooding.
+      // Guest users will only exist in Firebase Auth and won't have a Firestore record 
+      // until they perform an action that requires saving data (like playing a game).
 
       Alert.alert(
         'Playing as Guest',

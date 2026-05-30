@@ -23,6 +23,7 @@
     },
     "scheme": "com.appdevfinal.mobalauncher",
     "plugins": [
+      "expo-dev-client",
       "expo-web-browser",
       "@react-native-google-signin/google-signin",
       "expo-font"

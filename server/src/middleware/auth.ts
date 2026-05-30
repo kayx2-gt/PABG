@@ -21,3 +21,28 @@ export const verifyFirebaseToken = async (req: AuthRequest, res: Response, next:
     res.status(401).json({ error: 'Unauthorized: Invalid token' });
   }
 };
+
+export const ALLOWED_ADMIN_EMAILS = [
+  'appdevbsit@gmail.com',
+  'kylematthewnnicor@gmail.com',
+  'soniomark412@gmail.com',
+  'anthonyojano50@gmail.com',
+  'jeaniouray21@gmail.com',
+  'dalidalysah@gmail.com',
+  'santiagojuzin05@gmail.com',
+  'Chansalivio17@gmail.com',
+  'genermenez@gmail.com',
+];
+
+export const isAdmin = (req: AuthRequest, res: Response, next: NextFunction) => {
+  if (!req.user || !req.user.email) {
+    return res.status(403).json({ error: 'Forbidden: No email in token' });
+  }
+
+  if (!ALLOWED_ADMIN_EMAILS.includes(req.user.email)) {
+    console.warn(`Unauthorized admin access attempt by ${req.user.email}`);
+    return res.status(403).json({ error: 'Forbidden: You do not have admin privileges' });
+  }
+
+  next();
+};

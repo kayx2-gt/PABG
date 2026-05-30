@@ -9,16 +9,21 @@ import {
   ActivityIndicator, 
   Modal, 
   TextInput, 
-  ScrollView 
+  ScrollView,
+  Image,
+  RefreshControl
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Theme } from '../../utils/theme';
 import { fetchUsers, deleteUser, updateUser, updateUserSuspension } from '../../api/api';
+import RefreshSpinner from '../../components/RefreshSpinner';
 
 const AdminUsers = () => {
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Edit Modal States
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -47,6 +52,12 @@ const AdminUsers = () => {
       console.error("Error loading users:", error);
     }
     setLoading(false);
+  };
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await loadUsers();
+    setRefreshing(false);
   };
 
   const openEditModal = (user: any) => {
@@ -176,70 +187,140 @@ const AdminUsers = () => {
     );
   };
 
+  const filteredUsers = users.filter(user => 
+    (user.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (user.email || '').toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   const renderUserItem = ({ item }: { item: any }) => (
     <View style={styles.userCard}>
-      <View style={styles.userInfo}>
-        <Text style={styles.userName} numberOfLines={1}>{item.name || 'No Name'}</Text>
-        <Text style={styles.userEmail} numberOfLines={1}>{item.email}</Text>
-        <View style={styles.statsContainer}>
-          <Text style={styles.statText}>Points: <Text style={styles.statValue}>{item.totalPoints || 0}</Text></Text>
-          <Text style={styles.statText}>Played: <Text style={styles.statValue}>{item.totalGamesPlayed || item.gamesPlayed || 0}</Text></Text>
-        </View>
-        <View style={styles.badgeContainer}>
-          {item.isSuspended ? (
-            <View>
-              <Text style={[styles.badge, styles.badgeSuspended]}>Suspended</Text>
-              {item.suspendedUntil && (
-                <Text style={styles.suspensionMeta}>
-                  Until: {new Date(item.suspendedUntil).toLocaleDateString()}
-                </Text>
-              )}
-            </View>
+      {/* Left Column: Avatar and Actions */}
+      <View style={styles.userLeftCol}>
+        <View style={styles.avatarContainer}>
+          {item.photoURL ? (
+            <Image source={{ uri: item.photoURL }} style={styles.avatar} />
           ) : (
-            <Text style={[styles.badge, styles.badgeActive]}>Active</Text>
+            <View style={[styles.avatar, styles.avatarPlaceholder]}>
+              <Text style={styles.avatarPlaceholderText}>
+                {(item.name || item.email || '?').charAt(0).toUpperCase()}
+              </Text>
+            </View>
+          )}
+          {item.isSuspended && (
+            <View style={styles.suspendedIndicator}>
+              <Ionicons name="alert-circle" size={14} color="#FF4B4B" />
+            </View>
           )}
         </View>
+
+        <View style={styles.userActionRow}>
+          <TouchableOpacity 
+            style={[styles.miniActionBtn, styles.miniEditBtn]} 
+            onPress={() => openEditModal(item)}
+          >
+            <Ionicons name="create" size={16} color={Theme.colors.lime} />
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={[styles.miniActionBtn, item.isSuspended ? styles.miniUnsuspendBtn : styles.miniSuspendBtn]} 
+            onPress={() => handleSuspensionToggle(item)}
+          >
+            <Ionicons 
+              name={item.isSuspended ? "play" : "pause"} 
+              size={16} 
+              color={item.isSuspended ? Theme.colors.lime : "#FF4B4B"} 
+            />
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={[styles.miniActionBtn, styles.miniDeleteBtn]} 
+            onPress={() => handleDelete(item)}
+          >
+            <Ionicons name="trash" size={16} color="#FF4B4B" />
+          </TouchableOpacity>
+        </View>
       </View>
-      
-      <View style={styles.actionColumn}>
-        <TouchableOpacity 
-          style={[styles.actionBtn, styles.editBtn]} 
-          onPress={() => openEditModal(item)}
-        >
-          <Ionicons name="create-outline" size={18} color={Theme.colors.lime} />
-        </TouchableOpacity>
-        <TouchableOpacity 
-          style={[styles.actionBtn, item.isSuspended ? styles.unsuspendBtn : styles.suspendBtn]} 
-          onPress={() => handleSuspensionToggle(item)}
-        >
-          <Ionicons name={item.isSuspended ? "play" : "pause"} size={18} color={item.isSuspended ? Theme.colors.lime : "#FF4B4B"} />
-        </TouchableOpacity>
-        <TouchableOpacity 
-          style={[styles.actionBtn, styles.deleteBtn]} 
-          onPress={() => handleDelete(item)}
-        >
-          <Ionicons name="trash" size={18} color="#FF4B4B" />
-        </TouchableOpacity>
+
+      {/* Right Column: User Info */}
+      <View style={styles.userRightCol}>
+        <View style={styles.userHeaderRow}>
+          <Text style={styles.userName} numberOfLines={1}>{item.name || 'No Name'}</Text>
+          <View style={[styles.statusBadge, item.isSuspended ? styles.badgeSuspended : styles.badgeActive]}>
+            <Text style={[styles.statusBadgeText, { color: item.isSuspended ? '#FF4B4B' : Theme.colors.lime }]}>
+              {item.isSuspended ? 'Suspended' : 'Active'}
+            </Text>
+          </View>
+        </View>
+        
+        <Text style={styles.userEmail} numberOfLines={1}>{item.email}</Text>
+        
+        <View style={styles.userStatsRow}>
+          <View style={styles.userStatItem}>
+            <Ionicons name="trophy-outline" size={12} color={Theme.colors.lime} />
+            <Text style={styles.userStatValue}>{item.totalPoints || 0}</Text>
+            <Text style={styles.userStatLabel}>pts</Text>
+          </View>
+          <View style={styles.userStatItem}>
+            <Ionicons name="game-controller-outline" size={12} color={Theme.colors.textSecondary} />
+            <Text style={styles.userStatValue}>{item.totalGamesPlayed || item.gamesPlayed || 0}</Text>
+            <Text style={styles.userStatLabel}>played</Text>
+          </View>
+        </View>
+
+        {item.isSuspended && item.suspendedUntil && (
+          <View style={styles.suspensionInfo}>
+            <Ionicons name="time-outline" size={10} color="#FF4B4B" style={{ marginRight: 4 }} />
+            <Text style={styles.suspensionText}>
+              Until {new Date(item.suspendedUntil).toLocaleDateString()}
+            </Text>
+          </View>
+        )}
       </View>
     </View>
   );
 
   return (
     <SafeAreaView style={styles.container}>
+      <RefreshSpinner refreshing={refreshing} />
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Users</Text>
+        <Text style={styles.headerTitle}>Users Management</Text>
+      </View>
+
+      <View style={styles.searchBar}>
+        <Ionicons name="search-outline" size={20} color={Theme.colors.textSecondary} style={styles.searchIcon} />
+        <TextInput
+          placeholder="Search by name or email..."
+          placeholderTextColor={Theme.colors.textSecondary}
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+          style={styles.searchInput}
+        />
+        {searchQuery !== '' && (
+          <TouchableOpacity onPress={() => setSearchQuery('')}>
+            <Ionicons name="close-circle" size={18} color={Theme.colors.textSecondary} />
+          </TouchableOpacity>
+        )}
       </View>
       
       {loading ? (
         <ActivityIndicator size="large" color={Theme.colors.lime} style={styles.loader} />
       ) : (
         <FlatList
-          data={users}
+          data={filteredUsers}
           keyExtractor={(item) => item.id}
           renderItem={renderUserItem}
           contentContainerStyle={styles.listContainer}
+          refreshControl={
+            <RefreshControl 
+              refreshing={refreshing} 
+              onRefresh={onRefresh} 
+              tintColor="transparent" 
+              colors={['transparent']} 
+            />
+          }
           ListEmptyComponent={
-            <Text style={styles.emptyText}>No users found.</Text>
+            <View style={styles.emptyState}>
+              <Ionicons name="people-outline" size={60} color={Theme.colors.textMuted} />
+              <Text style={styles.emptyText}>No users found.</Text>
+            </View>
           }
         />
       )}
@@ -416,6 +497,27 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: '900',
   },
+  searchBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#1E1E26',
+    marginHorizontal: 20,
+    marginVertical: 15,
+    paddingHorizontal: 15,
+    borderRadius: 12,
+    height: 48,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.05)',
+  },
+  searchIcon: {
+    marginRight: 10,
+  },
+  searchInput: {
+    flex: 1,
+    color: Theme.colors.textPrimary,
+    fontSize: 14,
+    fontWeight: '600',
+  },
   listContainer: {
     paddingHorizontal: 20,
     paddingBottom: 100,
@@ -423,94 +525,157 @@ const styles = StyleSheet.create({
   userCard: {
     flexDirection: 'row',
     backgroundColor: Theme.colors.surface,
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
+    borderRadius: 16,
+    padding: 12,
+    marginBottom: 15,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.05)',
   },
-  userInfo: {
+  userLeftCol: {
+    alignItems: 'center',
+    width: 100,
+    marginRight: 15,
+  },
+  avatarContainer: {
+    position: 'relative',
+    marginBottom: 10,
+  },
+  avatar: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: Theme.colors.elevated,
+  },
+  avatarPlaceholder: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: Theme.colors.lime,
+  },
+  avatarPlaceholderText: {
+    color: Theme.colors.lime,
+    fontSize: 28,
+    fontWeight: '900',
+  },
+  suspendedIndicator: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    backgroundColor: '#1E1E26',
+    borderRadius: 10,
+    padding: 2,
+  },
+  userActionRow: {
+    flexDirection: 'row',
+    gap: 8,
+    justifyContent: 'center',
+  },
+  miniActionBtn: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#1E1E26',
+  },
+  miniEditBtn: {
+    backgroundColor: 'rgba(200, 255, 0, 0.1)',
+  },
+  miniSuspendBtn: {
+    backgroundColor: 'rgba(255, 75, 75, 0.1)',
+  },
+  miniUnsuspendBtn: {
+    backgroundColor: 'rgba(212, 255, 0, 0.1)',
+  },
+  miniDeleteBtn: {
+    backgroundColor: 'rgba(255, 75, 75, 0.1)',
+  },
+  userRightCol: {
     flex: 1,
+    justifyContent: 'center',
+  },
+  userHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 4,
   },
   userName: {
+    flex: 1,
     color: Theme.colors.textPrimary,
-    fontSize: 16,
-    fontWeight: '800',
-    marginBottom: 2,
+    fontSize: 18,
+    fontWeight: '900', 
+    marginRight: 8,
   },
   userEmail: {
     color: Theme.colors.textSecondary,
-    fontSize: 12,
-    marginBottom: 8,
+    fontSize: 13,
+    marginBottom: 12,
   },
-  statsContainer: {
+  userStatsRow: {
     flexDirection: 'row',
-    gap: 15,
+    gap: 12,
     marginBottom: 8,
   },
-  statText: {
+  userStatItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#1E1E26',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+    gap: 4,
+  },
+  userStatValue: {
+    color: Theme.colors.textPrimary,
+    fontSize: 13,
+    fontWeight: '800',
+  },
+  userStatLabel: {
     color: Theme.colors.textSecondary,
-    fontSize: 12,
+    fontSize: 11,
+    fontWeight: '600',
   },
-  statValue: {
-    color: Theme.colors.lime,
-    fontWeight: '700',
+  statusBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
   },
-  badgeContainer: {
-    flexDirection: 'row',
-  },
-  badge: {
+  statusBadgeText: {
     fontSize: 10,
-    fontWeight: '700',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 4,
+    fontWeight: '900',
+    textTransform: 'uppercase',
   },
   badgeActive: {
-    backgroundColor: 'rgba(212, 255, 0, 0.1)',
-    color: Theme.colors.lime,
+    backgroundColor: 'rgba(200, 255, 0, 0.1)',
   },
   badgeSuspended: {
     backgroundColor: 'rgba(255, 75, 75, 0.1)',
-    color: '#FF4B4B',
   },
-  suspensionMeta: {
-    color: Theme.colors.textSecondary,
-    fontSize: 10,
+  suspensionInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
     marginTop: 4,
   },
-  actionColumn: {
-    justifyContent: 'center',
-    gap: 10,
-    marginLeft: 10,
-  },
-  actionBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: Theme.colors.elevated,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  editBtn: {
-    backgroundColor: 'rgba(200, 255, 0, 0.1)',
-  },
-  suspendBtn: {
-    backgroundColor: 'rgba(255, 75, 75, 0.1)',
-  },
-  unsuspendBtn: {
-    backgroundColor: 'rgba(212, 255, 0, 0.1)',
-  },
-  deleteBtn: {
-    backgroundColor: 'rgba(255, 75, 75, 0.1)',
+  suspensionText: {
+    color: '#FF4B4B',
+    fontSize: 11,
+    fontWeight: '700',
   },
   loader: {
     marginTop: 50,
   },
-  emptyText: {
-    color: Theme.colors.textSecondary,
-    textAlign: 'center',
-    marginTop: 50,
+  emptyState: {
+    paddingTop: 100,
+    alignItems: 'center',
   },
-  // Modal Styling
+  emptyText: {
+    fontSize: 16,
+    color: Theme.colors.textSecondary,
+    marginTop: 15,
+    fontWeight: '700',
+  },
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.75)',

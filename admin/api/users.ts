@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { db, serverTimestamp, increment } from './_lib/firebase';
-import { verifyToken, AuthRequest } from './_lib/auth';
+import { verifyToken, AuthRequest, ALLOWED_ADMIN_EMAILS, isAdmin } from './_lib/auth';
 import { requireActiveUser } from './_lib/requireActiveUser';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -152,7 +152,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           });
         }
       }
-      return res.json({ id: doc.id, ...data });
+      const role = (data.email && ALLOWED_ADMIN_EMAILS.includes(data.email)) ? 'admin' : 'user';
+      return res.json({ id: doc.id, ...data, role });
     } catch (error) {
       return res.status(500).json({ error: 'Failed to fetch user profile' });
     }
@@ -194,6 +195,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   // GET /api/users (all users — admin)
   if (!sub && req.method === 'GET') {
+    if (!isAdmin(authReq, res)) return;
     try {
       const snapshot = await db.collection('users').get();
       const users = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));

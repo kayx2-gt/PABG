@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { db, serverTimestamp } from './_lib/firebase';
-import { verifyToken } from './_lib/auth';
+import { verifyToken, isAdmin } from './_lib/auth';
 import { fetchGamesFromAPI } from './_lib/gamemonetize';
 
 const GAMES_COLLECTION = 'games';
@@ -12,6 +12,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method === 'OPTIONS') return res.status(200).end();
 
   if (!(await verifyToken(req as any, res))) return;
+  if (!isAdmin(req as any, res)) return;
 
   const { sub } = req.query;
 

@@ -74,6 +74,34 @@ export const HomeSkeleton = () => {
   );
 };
 
+export const AdminDashboardSkeleton = () => {
+  return (
+    <View style={styles.container}>
+      {/* Header */}
+      <View style={styles.header}>
+        <View style={styles.rowJustify}>
+          <View style={[styles.rectShort, { width: 150, height: 30 }]} />
+          <View style={[styles.circle, { width: 40, height: 40, borderRadius: 20 }]} />
+        </View>
+        <View style={[styles.rectShort, { width: 80, height: 15, marginTop: 8 }]} />
+      </View>
+
+      {/* Hero Carousel Skeleton */}
+      <View style={[styles.rectLong, { height: 220, width: width - 40, marginHorizontal: 20, borderRadius: 24 }]} />
+
+      {/* Top Players Skeleton */}
+      <View style={[styles.sectionHeader, { marginTop: 30 }]} />
+      <View style={[styles.rectLong, { height: 280, width: width - 40, marginHorizontal: 20, borderRadius: 24, backgroundColor: Theme.colors.surface }]} />
+
+      {/* Available Games Section Skeleton */}
+      <View style={[styles.sectionHeader, { marginTop: 30 }]} />
+      <View style={styles.row}>
+        {[1, 2].map((i) => <SkeletonCard key={i} horizontal={true} />)}
+      </View>
+    </View>
+  );
+};
+
 const styles = StyleSheet.create({
   container: { flex: 1 },
   header: { padding: 20, marginBottom: 10 },
